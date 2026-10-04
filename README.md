@@ -48,8 +48,8 @@ Aucun gestionnaire de paquets (Composer, npm) n'est nécessaire : le code est au
 ### En local (développement ou essai)
 
 ```bash
-git clone https://github.com/<votre-compte>/tracteur.git
-cd tracteur
+git clone https://github.com/krapotard/Tracteur.git
+cd Tracteur
 php tools/install.php        # crée data/tracteur.sqlite, un compte « admin » et un compte « demo »
 php -S localhost:8000        # ou placez le dossier sous Apache/XAMPP
 ```
