@@ -1,0 +1,12 @@
+# Donnees d'une installation : base, Chrome, fichiers temporaires, identifiants
+/data/*
+!/data/.htaccess
+/dist/
+*.sqlite
+*.log
+
+# Editeurs et systemes
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

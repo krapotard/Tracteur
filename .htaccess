@@ -1,0 +1,13 @@
+Options -Indexes
+# Jamais de depot Git, de sauvegardes ni de fichiers de configuration servis au web
+RedirectMatch 404 /\.git
+<FilesMatch "\.(sqlite|bak|log|lock)$">
+  Require all denied
+</FilesMatch>
+AddType application/manifest+json .webmanifest
+AddType image/svg+xml .svg
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "same-origin"
+</IfModule>

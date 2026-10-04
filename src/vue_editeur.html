@@ -1,0 +1,130 @@
+<div id="app">
+  <header class="topbar">
+    <div class="marque">
+      <img src="assets/logo/tracteur-app.svg" alt="" width="40" height="40">
+      <h1><span class="nom">Tracteur</span><span class="desc"> &#8211; &#233;diteur de tracts accessibles</span></h1>
+    </div>
+    <button class="btn" id="bNouveau" type="button">Nouveau</button>
+    <button class="btn" id="bOuvrir" type="button">Ouvrir un projet&#8230;</button>
+    <button class="btn" id="bSauver" type="button">Enregistrer le projet</button>
+    <button class="btn" id="bPdf" type="button">PDF seul</button>
+    <button class="btn" id="bEml" type="button">Mail seul (.eml)</button>
+    <button class="btn pri" id="bTout" type="button">Exporter PDF + mail</button>
+    <input type="file" id="fProjet" accept=".json,application/json" hidden>
+  </header>
+  <div id="attente" role="status" aria-live="polite" hidden><span class="roue" aria-hidden="true"></span><span id="attenteTexte"></span></div>
+  <div class="main">
+    <section class="gauche" aria-label="Contenu du tract">
+      <div class="gauche-scroll">
+        <p class="outils-boites"><button type="button" class="btn" id="bBoitesRepli">Tout replier</button> <button type="button" class="btn" id="bBoitesDeplie">Tout d&#233;plier</button></p>
+        <details class="boite" data-id="aide">
+          <summary><span class="titre">Comment &#231;a marche ?</span></summary>
+          <div class="boite-corps"><ul>
+            <li>Choisissez un mod&#232;le, &#233;crivez le titre, puis ajoutez des blocs (intertitre, texte, liste, image, encadr&#233;).</li>
+            <li>Le m&#234;me contenu produit le <strong>PDF</strong> du tract et le <strong>mail</strong> : le mail est toujours en une seule colonne, dans l'ordre de lecture.</li>
+            <li>L'onglet &#171; Accessibilit&#233; &#187; liste ce qu'il faut corriger. Les erreurs bloquent l'export.</li>
+            <li>Polices int&#233;gr&#233;es (licence libre SIL Open Font License) : Barlow, Barlow Condensed, Atkinson Hyperlegible, Lexend, Open Sans, Roboto, Montserrat, Oswald, Lora, Bebas Neue, Permanent Marker, Fredericka the Great, Concert One, Lobster Two, Barlow Semi Condensed, Fira Sans, Federo, Caveat Brush.</li>
+            <li>Le PDF est produit par le serveur (balis&#233; : titres et ordre de lecture). Avec &#171; Exporter PDF + mail &#187;, il est aussi joint au fichier .eml.</li>
+          </ul></div>
+        </details>
+        <details class="boite" data-id="charte" open>
+          <summary><span class="titre">Charte et mod&#232;le</span><span class="etat" id="etatCharte"></span></summary>
+          <div class="boite-corps">
+            <label for="modele">Mod&#232;le</label>
+            <select id="modele"></select>
+            <p class="aide" id="aideModele"></p>
+          </div>
+        </details>
+        <details class="boite" data-id="titre" open>
+          <summary><span class="titre">Titre et objet du mail</span><span class="etat" id="etatTitre"></span></summary>
+          <div class="boite-corps">
+            <label for="titre">Titre du tract</label>
+            <textarea id="titre" rows="2" autocomplete="off" aria-describedby="titreAide"></textarea>
+            <p class="aide" id="titreAide">Pour couper le titre sur deux lignes, appuyez sur Entr&#233;e &#224; l&#8217;endroit voulu (ou tapez le signe |).</p>
+            <label class="inline" style="margin-top:8px"><input type="checkbox" id="titreMaj"> Titre en majuscules</label>
+            <label for="objet">Objet du mail <span style="font-weight:normal">(si diff&#233;rent du titre)</span></label>
+            <input type="text" id="objet" autocomplete="off">
+          </div>
+        </details>
+        <details class="boite" data-id="typo">
+          <summary><span class="titre">Typographie et mise en forme</span><span class="etat" id="etatTypo"></span></summary>
+          <div class="boite-corps">
+            <label class="inline" style="margin-top:4px"><input type="checkbox" id="barre"> D&#233;coration des intertitres (PDF)</label>
+            <p class="aide" style="margin-top:0">Barre ou soulignement, selon la charte choisie. Le mail n&#8217;a pas cette d&#233;coration.</p>
+            <label for="police">Police par d&#233;faut (tract et mail)</label>
+            <select id="police"></select>
+            <label for="policeTitre">Police du titre du tract</label>
+            <select id="policeTitre"></select>
+            <p class="aide">Les polices sont int&#233;gr&#233;es au fichier : elles s&#8217;impriment dans le PDF sans connexion. Dans le mail, la police n&#8217;appara&#238;t que chez les destinataires qui l&#8217;ont install&#233;e ; les autres voient Arial (ou une police de m&#234;me famille).</p>
+            <label for="align">Alignement du texte (PDF)</label>
+            <select id="align"><option value="justifie">Justifi&#233;</option><option value="gauche">&#192; gauche</option></select>
+            <p class="aide">Le texte justifi&#233; peut cr&#233;er des espaces irr&#233;guliers entre les mots, surtout en colonnes &#233;troites ; &#171; &#192; gauche &#187; est plus confortable pour beaucoup de lecteurs (dyslexie notamment). Le mail reste toujours align&#233; &#224; gauche.</p>
+          </div>
+        </details>
+        <details class="boite" data-id="contenu" open>
+          <summary><span class="titre">Contenu du tract</span><span class="etat" id="etatBlocs"></span></summary>
+          <div class="boite-corps">
+            <div id="blocs"></div>
+          </div>
+        </details>
+      </div>
+      <div class="ajout">
+        <p>Ajouter un bloc <span style="font-weight:normal;color:var(--gris)">(apr&#232;s le bloc s&#233;lectionn&#233;)</span></p>
+        <button class="btn" type="button" data-ajout="intertitre">+ Intertitre</button>
+        <button class="btn" type="button" data-ajout="texte">+ Texte</button>
+        <button class="btn" type="button" data-ajout="liste">+ Liste</button>
+        <button class="btn" type="button" data-ajout="image">+ Image</button>
+        <button class="btn" type="button" data-ajout="encadre">+ Encadr&#233;</button>
+        <button class="btn" type="button" id="bBanque">+ Banque d&#8217;&#233;l&#233;ments</button>
+      </div>
+    </section>
+    <section class="droite" aria-label="Aper&#231;u et contr&#244;les">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabTract" aria-controls="pTract" aria-selected="true" type="button">Tract (PDF)</button>
+        <button class="tab" role="tab" id="tabMail" aria-controls="pMail" aria-selected="false" type="button">Mail</button>
+        <button class="tab" role="tab" id="tabAcc" aria-controls="pAcc" aria-selected="false" type="button">Accessibilit&#233; <span class="badge" id="badge">0</span></button>
+      </div>
+      <div class="panneau" id="pTract" role="tabpanel" aria-labelledby="tabTract"><div id="apWrap"><div id="apScale"><div id="apTract"></div></div></div></div>
+      <div class="panneau blanc" id="pMail" role="tabpanel" aria-labelledby="tabMail" hidden>
+        <p class="note">Aper&#231;u indicatif : le rendu r&#233;el d&#233;pend du logiciel de messagerie. Pensez &#224; vous envoyer un test.</p>
+        <iframe id="mailFrame" title="Aper&#231;u du mail" sandbox=""></iframe>
+      </div>
+      <div class="panneau blanc" id="pAcc" role="tabpanel" aria-labelledby="tabAcc" hidden>
+        <div id="accListe"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="printRoot"></div>
+<div id="mesure" aria-hidden="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlgBanque" class="large">
+  <form method="dialog">
+    <h2>Banque d&#8217;&#233;l&#233;ments <span id="bqNom" style="font-weight:normal;font-size:15px"></span></h2>
+    <p class="aide">Pictogrammes, num&#233;ros, s&#233;parateurs&#8230; Chaque &#233;l&#233;ment arrive avec son texte alternatif (modifiable). Dans le PDF il reste net (vectoriel) ; pour le mail il est converti en image PNG.</p>
+    <p class="note" id="bqMode" hidden>Choisissez l&#8217;&#233;l&#233;ment &#224; placer &#224; c&#244;t&#233; de l&#8217;intertitre.</p>
+    <div class="bq-tools">
+      <label class="sr" for="bqRecherche">Rechercher</label><input type="text" id="bqRecherche" placeholder="Rechercher (nom, mot-cl&#233;)&#8230;" autocomplete="off">
+      <label class="sr" for="bqCat">Cat&#233;gorie</label><select id="bqCat"></select>
+      <button class="btn" type="button" id="bqCharger">Charger une autre banque&#8230;</button>
+      <input type="file" id="bqFichier" accept=".js,.json" hidden>
+    </div>
+    <div id="bqGrille"></div>
+    <div class="actions"><button class="btn pri" value="fermer">Fermer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgLien">
+  <form method="dialog">
+    <h2>Ajouter un lien</h2>
+    <p class="aide">Les mots s&#233;lectionn&#233;s deviendront le lien. Choisissez des mots qui se comprennent seuls (&#233;vitez &#171; cliquez ici &#187;).</p>
+    <label for="lienUrl">Adresse du lien</label>
+    <input type="text" id="lienUrl" placeholder="https://&#8230; ou adresse mail" autocomplete="off">
+    <div class="actions">
+      <button class="btn" value="annuler" formnovalidate>Annuler</button>
+      <button class="btn pri" value="ok">Valider</button>
+    </div>
+  </form>
+</dialog>
+

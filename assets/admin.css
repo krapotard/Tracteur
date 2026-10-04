@@ -1,0 +1,91 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later
+   Copyright (C) 2026 Thomas Garnier <thomas.garnier83@gmail.com> */
+:root{--rouge:#C00000;--texte:#1a1a1a;--fond:#f3f3f3;--bord:#767676;--lien:#0b4f9c;--gris:#595959}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:var(--texte);background:var(--fond)}
+.evitement{position:absolute;left:-999px;top:0;background:#fff;color:var(--texte);padding:8px 12px;z-index:10}
+.evitement:focus{left:8px;top:8px}
+a{color:var(--lien)}
+:focus-visible{outline:3px solid #0b4f9c;outline-offset:2px}
+.entete{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:8px 16px;background:var(--rouge);color:#fff}
+.entete .marque{display:flex;align-items:center;gap:10px;margin-right:auto}
+.entete .marque img{display:block;width:40px;height:40px;border-radius:9px;flex:none}
+.nom-appli{margin:0;font-size:17px;line-height:1.2}.nom-appli .nom{font-size:21px;font-weight:bold}
+.entete nav ul{display:flex;flex-wrap:wrap;gap:4px 6px;list-style:none;margin:0;padding:0}
+.entete nav a,.lien-bouton{display:block;color:#fff;font:inherit;text-decoration:none;padding:6px 10px;border-radius:4px;border:0;background:none;cursor:pointer}
+.entete nav a:hover,.lien-bouton:hover{text-decoration:underline}
+.entete nav a[aria-current=page]{background:#fff;color:var(--rouge);font-weight:bold}
+.entete :focus-visible{outline-color:#fff}
+.entete form{margin:0}
+.qui{margin:0;font-size:14px;width:100%;text-align:right}
+main{max-width:1000px;margin:20px auto;padding:20px 24px 32px;background:#fff;border:1px solid #c9c9c9;border-radius:6px}
+@media (max-width:700px){main{margin:0;border-radius:0;padding:16px}.qui{text-align:left}}
+h1{font-size:26px;line-height:1.25;margin:0 0 16px}
+h2{font-size:20px;margin:28px 0 8px;padding-top:12px;border-top:1px solid #c9c9c9}
+h3{font-size:17px;margin:18px 0 6px}
+.aide{color:var(--gris);font-size:14px;margin:2px 0 8px}
+label{display:block;font-weight:bold;margin:12px 0 4px}
+label.case{display:flex;gap:8px;align-items:center;font-weight:normal}
+input[type=text],input[type=email],input[type=password],input[type=url],input[type=number],select,textarea{font:inherit;padding:8px 10px;border:2px solid var(--bord);border-radius:4px;width:100%;max-width:520px;background:#fff;color:var(--texte)}
+textarea{max-width:520px;min-height:76px}
+input[type=file]{font:inherit;max-width:100%}
+fieldset{border:1px solid var(--bord);border-radius:6px;margin:16px 0;padding:8px 16px 16px}
+legend{font-weight:bold;padding:0 6px}
+.btn{display:inline-block;font:inherit;font-weight:bold;text-decoration:none;padding:9px 16px;border:2px solid var(--rouge);border-radius:4px;background:var(--rouge);color:#fff;cursor:pointer;margin:8px 8px 0 0}
+.btn-sec{background:#fff;color:var(--rouge)}
+.btn-danger{background:#fff;color:#8a0000;border-color:#8a0000}
+.btn-petit{padding:4px 10px;font-size:14px;margin:2px 4px 2px 0}
+.msg{border:2px solid;border-radius:4px;padding:10px 14px;margin:0 0 14px}
+.msg-ok{background:#e8f5ec;border-color:#0b6b2b}.msg-err{background:#fde8e8;border-color:#a00000}
+table{border-collapse:collapse;width:100%;margin:8px 0}
+caption{text-align:left;font-weight:bold;padding:4px 0}
+th,td{border:1px solid #c9c9c9;padding:7px 10px;text-align:left;vertical-align:top}
+thead th{background:#f3f3f3}
+.actions form{display:inline}
+.etat-ok{color:#0b6b2b;font-weight:bold}.etat-ko{color:#a00000;font-weight:bold}
+.cadre{border:2px solid var(--bord);border-radius:6px;padding:10px 14px;margin:12px 0}
+.ligne-couleur{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ligne-couleur input[type=color]{width:52px;height:40px;padding:2px;border:2px solid var(--bord);border-radius:4px;background:#fff}
+.ligne-couleur input[type=text]{max-width:130px;font-family:monospace}
+.apercu-logo{display:block;max-width:160px;max-height:120px;border:1px solid #c9c9c9;padding:6px;background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/16px 16px}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;list-style:none;padding:0;margin:12px 0}
+.grille li{border:1px solid #c9c9c9;border-radius:6px;padding:10px}
+.grille .vignette{height:90px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:4px;margin-bottom:6px}
+.grille .vignette img{max-width:100%;max-height:86px}
+.grille .nom-el{font-weight:bold;word-break:break-word}
+details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
+code{background:#f3f3f3;padding:1px 5px;border-radius:3px}
+.mdp-affiche{font-family:monospace;font-size:20px;background:#fff8e1;border:2px dashed var(--bord);padding:8px 12px;display:inline-block;user-select:all}
+
+/* ---------- Boites repliables, choix par cartes, barre d'enregistrement ---------- */
+details.boite{border:1px solid #c9c9c9;border-radius:8px;margin:0 0 12px;background:#fff}
+details.boite > summary,details.sous > summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px}
+details.boite > summary::-webkit-details-marker,details.sous > summary::-webkit-details-marker{display:none}
+details.boite > summary{padding:12px 16px;font-size:17px;font-weight:bold;border-radius:8px}
+details.boite > summary:hover{background:#f7f7f7}
+details.boite > summary::before,details.sous > summary::before{content:"\25B8";display:inline-block;transition:transform .15s;flex:none}
+details.boite[open] > summary::before,details.sous[open] > summary::before{transform:rotate(90deg)}
+details.boite > summary .etat{margin-left:auto;font-size:14px;font-weight:normal;color:var(--gris);text-align:right}
+details.boite > .boite-corps{padding:4px 18px 16px;border-top:1px solid #e3e3e3}
+details.sous{border:1px dashed var(--bord);border-radius:6px;margin:12px 0;background:#fafafa}
+details.sous > summary{padding:9px 12px;font-weight:bold;font-size:15px}
+details.sous > .boite-corps{padding:0 14px 12px}
+.pastille{display:inline-block;width:16px;height:16px;border:1px solid #1a1a1a;border-radius:50%;vertical-align:middle;margin-right:3px}
+.outils-boites{margin:0 0 10px}
+fieldset.choix{border:0;padding:0;margin:8px 0 12px}
+fieldset.choix legend{font-size:16px;padding:0;margin-bottom:6px}
+.carte-choix{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--bord);border-radius:8px;padding:11px 14px;margin:0 0 8px;font-weight:normal;cursor:pointer;background:#fff}
+.carte-choix input{margin-top:5px;flex:none}
+.carte-choix .aide{display:block;margin:2px 0 0}
+.carte-choix:has(input:checked){border-color:var(--lien);background:#eef5fd}
+.carte-choix:has(input:focus-visible){outline:3px solid #0b4f9c;outline-offset:2px}
+.panneau{border-left:4px solid var(--lien);padding:2px 0 2px 16px;margin:12px 0 4px}
+.panneau[hidden]{display:none}
+.barre-fixe{position:sticky;bottom:0;background:#fff;border-top:1px solid #c9c9c9;padding:10px 0;margin-top:14px;z-index:5}
+.barre-fixe .btn{margin:0 8px 0 0}
+@media (max-width:700px){details.boite > summary{flex-wrap:wrap}details.boite > summary .etat{margin-left:0;text-align:left;width:100%}}
+
+.manuel{max-width:78ch;line-height:1.55}
+.manuel h2{margin-top:34px;border-top:1px solid var(--bord,#c9c9c9);padding-top:16px}
+.manuel h3{margin-top:22px}
+.manuel p.note{background:#fff4cc;border-left:4px solid #FCC953;padding:10px 14px;margin:14px 0}
