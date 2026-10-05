@@ -153,6 +153,44 @@ function pdfua_artefacts(string $c): array {
     return [$res . substr($c, $pos), $n];
 }
 
+/** Numeros des enfants d'un element de structure quand /K est une reference ou un tableau de references seulement ; sinon null. */
+function pdfua_enfants(string $d): ?array {
+    if (preg_match('#/K\s*\[([^\]]*)\]#', $d, $k)) {
+        if (preg_match('#<<|\(#', $k[1]) || preg_replace('#\d+ 0 R|\s+#', '', $k[1]) !== '') return null;
+        preg_match_all('#(\d+) 0 R#', $k[1], $m); return array_map('intval', $m[1]);
+    }
+    if (preg_match('#/K\s+(\d+) 0 R#', $d, $k)) return [(int)$k[1]];
+    return null;
+}
+
+/**
+ * PDF/UA : un element de liste (LI) ne contient que Lbl (puce ou numero) et LBody (contenu). Chrome place le contenu en vrac
+ * (texte, gras, liens...) directement dans LI : on l'enveloppe dans un LBody. Renvoie le nombre d'elements de liste corriges.
+ */
+function pdfua_corps_de_liste(array &$objs): int {
+    $n = 0;
+    foreach ($objs as $num => $o) {
+        if (!preg_match('#/S\s*/LI(?![A-Za-z])#', $o['d']) || strpos($o['d'], '/Type /StructElem') === false) continue;
+        $enf = pdfua_enfants($o['d']);
+        if ($enf === null || !$enf) continue;
+        $reste = [];
+        foreach ($enf as $c) {
+            $sc = isset($objs[$c]) && preg_match('#/S\s*/(\w+)#', $objs[$c]['d'], $mm) ? $mm[1] : '';
+            if ($sc === 'Lbl' && !$reste && $c === $enf[0]) continue;       // la puce reste a part
+            $reste[] = $c;
+        }
+        if (!$reste) continue;
+        if (count($reste) === 1 && preg_match('#/S\s*/LBody#', $objs[$reste[0]]['d'])) continue;      // deja correct
+        $nouveau = max(array_keys($objs)) + 1;
+        foreach ($reste as $c) $objs[$c]['d'] = preg_replace('#/P \d+ 0 R#', '/P ' . $nouveau . ' 0 R', $objs[$c]['d'], 1);
+        $objs[$nouveau] = ['d' => '<</Type /StructElem /S /LBody /P ' . $num . ' 0 R /K [' . implode(' ', array_map(fn($c) => $c . ' 0 R', $reste)) . ']>>', 's' => null];
+        $gardes = array_diff($enf, $reste);
+        $objs[$num]['d'] = preg_replace('#/K\s*(\[[^\]]*\]|\d+ 0 R)#', '/K [' . implode(' ', array_map(fn($c) => $c . ' 0 R', array_merge($gardes, [$nouveau]))) . ']', $objs[$num]['d'], 1);
+        $n++;
+    }
+    return $n;
+}
+
 /** Texte de description d'un lien (champ /Contents) d'apres son adresse. */
 function pdfua_description_lien(string $uri): string {
     if (stripos($uri, 'mailto:') === 0) return 'Écrire à ' . substr($uri, 7);
@@ -201,6 +239,14 @@ function pdfua_controle(array $objs, ?int $racine): array {
             if ($c !== false && strpos($c, 'begincmap') !== false && preg_match('/<[0-9A-Fa-f]{4}>\s*<(?:0000|FEFF|FFFE)>/i', $c)) $zero++;
         }
     }
+    $liMal = 0;
+    foreach ($objs as $o) {
+        if (!preg_match('#/S\s*/LI(?![A-Za-z])#', $o['d']) || strpos($o['d'], '/Type /StructElem') === false) continue;
+        $enf = pdfua_enfants($o['d']);
+        if ($enf === null) { $liMal++; continue; }
+        foreach ($enf as $c) if (!isset($objs[$c]) || !preg_match('#/S\s*/(Lbl|LBody)(?![A-Za-z])#', $objs[$c]['d'])) { $liMal++; break; }
+    }
+    if ($liMal) $pb[] = 'liste mal structuree (' . $liMal . ')';
     if ($reste) $pb[] = 'contenu ni balise ni artefact (' . $reste . ')';
     if ($figures) $pb[] = 'image sans texte alternatif (' . $figures . ')';
     if ($liens) $pb[] = 'lien sans description (' . $liens . ')';
@@ -265,6 +311,7 @@ function pdf_ua_corriger(string $pdf, string $titre, string $langue = 'fr', ?arr
             $objs[$struct]['d'] = preg_replace('#>>\s*$#', ' /RoleMap <<' . trim($map) . '>>>>', $objs[$struct]['d']);
             $rapport['roles'] = array_keys($roles);
         }
+        $rapport['listes'] = pdfua_corps_de_liste($objs);
         $rapport['problemes'] = pdfua_controle($objs, $racine);
         $declarer = $declarer && !$rapport['problemes'];                // pas de mention PDF/UA si l'autocontrole releve quelque chose
         $rapport['declare'] = $declarer;
