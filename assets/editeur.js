@@ -149,7 +149,7 @@ function nouveauBloc(type) {
   if (type === "texte") Object.assign(b, { paras: [] });
   if (type === "liste") Object.assign(b, { ordonnee: false, items: "" });
   if (type === "image") Object.assign(b, { src: "", svg: "", mime: "", w: 0, h: 0, alt: "", deco: false, credit: "", taille: "pleine", banqueId: "", cote: "", dispo: "cote", paras: [] });
-  if (type === "encadre") Object.assign(b, { style: "jaune", paras: [], niveau: 0, portee: "premier", align: "gauche" });
+  if (type === "encadre") Object.assign(b, { style: "jaune", paras: [], niveau: 0, portee: "premier", align: "gauche", orn: null });
   return b;
 }
 function exemple() {
@@ -294,7 +294,10 @@ function tractHtml() {
     if (b.type === "encadre") {
       if (!b.paras.length) return "";
       const L = b.niveau | 0, tg = i => L && (b.portee === "tout" || i === 0) ? "h" + L : "p";
-      return `<div class="enc enc-${b.style}${b.align === "centre" ? " centre" : ""}">${b.paras.map((p, i) => `<${tg(i)}>${typo(p)}</${tg(i)}>`).join("")}</div>`;
+      const txt = b.paras.map((p, i) => `<${tg(i)}>${typo(p)}</${tg(i)}>`).join(""), o = b.orn, centre = b.align === "centre" ? " centre" : "";
+      if (!o) return `<div class="enc enc-${b.style}${centre}">${txt}</div>`;
+      const im = `<img class="orn-enc orn-enc-${o.taille}" src="${o.svg || o.src}" alt="${o.decoratif ? "" : escA(o.alt)}">`;
+      return `<div class="enc enc-${b.style}${centre} avec-orn orn-${o.cote}">${o.cote === "droite" ? `<div class="enc-txt">${txt}</div>${im}` : `${im}<div class="enc-txt">${txt}</div>`}</div>`;
     }
     return "";
   };
@@ -369,11 +372,25 @@ function mailHtml(apercu) {
     if (b.type === "encadre") {
       if (!b.paras.length) return "";
       const st = { jaune: [C.jaune, bt, C.lien], rouge: [C.rouge, "#ffffff", "#ffffff"], gris: ["#EDEDED", bt, C.lien] }[b.style];
-      const L = b.niveau | 0, al = b.align === "centre" ? "center" : "left", pt = PTN;
-      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 12px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${al}" style="${Fb}background:${st[0]};padding:14px 16px;font-size:12pt;line-height:1.5;color:${st[1]};text-align:${al}">` +
-        b.paras.map((p, i) => { const mg = i === b.paras.length - 1 ? 0 : 8, hd = L && (b.portee === "tout" || i === 0);
-          return hd ? `<h${L} style="${Fb}font-size:${pt[L]}pt;line-height:1.25;font-weight:bold;margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</h${L}>`
-                    : `<p style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</p>`; }).join("\n") + `</td></tr></table></td></tr></table>`;
+      const L = b.niveau | 0, al = b.align === "centre" ? "center" : "left", pt = PTN, o = b.orn;
+      const txt = b.paras.map((p, i) => { const mg = i === b.paras.length - 1 ? 0 : 8, hd = L && (b.portee === "tout" || i === 0);
+        return hd ? `<h${L} style="${Fb}font-size:${pt[L]}pt;line-height:1.25;font-weight:bold;margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</h${L}>`
+                  : `<p style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</p>`; }).join("\n");
+      let dedans = txt;
+      if (o) {
+        n++; const cid = `img${n}@tract.local`, ext = o.mime === "image/png" ? "png" : "jpg";
+        images.push({ cid, mime: o.mime, nom: `image${n}.${ext}`, b64: o.src.split(",")[1] });
+        const hPx = { petite: 45, moyenne: 76, grande: 121 }[o.taille] || 76, wPx = Math.round(hPx * o.w / o.h);
+        const im = `<img src="${apercu ? o.src : "cid:" + cid}" alt="${o.decoratif ? "" : escA(o.alt)}" width="${wPx}" height="${hPx}" style="width:${wPx}px;height:${hPx}px;border:0;display:block">`;
+        if (o.cote === "haut") dedans = `<div style="margin:0 0 8px 0;text-align:${al}"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="${al}"><tr><td>${im}</td></tr></table></div>\n` + txt;
+        else {
+          const droite = o.cote === "droite";
+          const cI = `<td valign="middle" style="padding:0 ${droite ? 0 : 14}px 0 ${droite ? 14 : 0}px">${im}</td>`;
+          const cT = `<td valign="middle" style="${Fb}font-size:12pt;line-height:1.5;color:${st[1]};text-align:${al}">${txt}</td>`;
+          dedans = `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${droite ? cT + cI : cI + cT}</tr></table>`;
+        }
+      }
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 12px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${al}" style="${Fb}background:${st[0]};padding:14px 16px;font-size:12pt;line-height:1.5;color:${st[1]};text-align:${al}">` + dedans + `</td></tr></table></td></tr></table>`;
     }
     return "";
   }).filter(Boolean).join("\n");
@@ -490,6 +507,7 @@ function verifier() {
       const lg = b.type === "liste" ? b.items.length : b.paras.reduce((n, p) => n + texteDe(p).length, 0);
       if (lg > 150) add("avert", `${nom} : cette police d\u00e9corative convient mal \u00e0 un long texte (r\u00e9servez-la aux titres courts).`, b.id);
     }
+    if (b.type === "encadre" && b.orn && !b.orn.decoratif && !b.orn.alt.trim()) add("erreur", `${nom} : le pictogramme de l\u2019encadr\u00e9 n\u2019a pas de texte alternatif (ou cochez \u00ab D\u00e9coratif \u00bb).`, b.id);
     if (b.type === "intertitre") {
       if (!b.texte.trim()) { add("avert", `${nom} (intertitre) : vide, il sera ignor\u00e9.`, b.id); return; }
       nTitres++; longSansTitre = 0;
@@ -670,16 +688,25 @@ function riche(b) {
   bar.append(bg, bi, bl);
   if (b.type !== "encadre") {
     const sel = () => { const x = getSelection(); return x.rangeCount && !x.isCollapsed && ed.contains(x.anchorNode); };
+    const colore = () => {                       // la selection (ou le curseur) est-elle deja dans la couleur d'accentuation ?
+      const x = getSelection(); if (!x.rangeCount || !ed.contains(x.anchorNode)) return false;
+      const n = x.anchorNode, e = n.nodeType === 1 ? n : n.parentElement;
+      for (let p = e; p && p !== ed; p = p.parentElement) if (p.classList.contains("acc") || couleurDe(p, (p.getAttribute("style") || "").toLowerCase()) === String(CONFIG.rouge).toLowerCase()) return true;
+      return false;
+    };
     const bc = bouton("Couleur", "Mettre les mots s\u00e9lectionn\u00e9s en couleur (rouge de la charte)", () => {
+      if (colore()) { ed.focus(); document.execCommand("foreColor", false, CONFIG.texte); ed.dispatchEvent(new Event("input")); majCouleur(); return; }
       if (!sel()) { toast("S\u00e9lectionnez d\u2019abord, dans le texte, les mots \u00e0 mettre en couleur."); return; }
-      ed.focus(); document.execCommand("foreColor", false, CONFIG.rouge); ed.dispatchEvent(new Event("input"));
+      ed.focus(); document.execCommand("foreColor", false, CONFIG.rouge); ed.dispatchEvent(new Event("input")); majCouleur();
     });
     bc.style.color = CONFIG.rouge; bc.style.fontWeight = "bold";
-    const bn = bouton("Couleur normale", "Remettre les mots s\u00e9lectionn\u00e9s en couleur normale", () => {
-      if (!sel()) { toast("S\u00e9lectionnez d\u2019abord, dans le texte, les mots \u00e0 remettre en couleur normale."); return; }
-      ed.focus(); document.execCommand("foreColor", false, CONFIG.texte); ed.dispatchEvent(new Event("input"));
-    });
-    bar.append(bc, bn);
+    const majCouleur = () => {
+      const dans = colore(); bc.textContent = dans ? "Couleur normale" : "Couleur";
+      bc.setAttribute("aria-label", dans ? "Remettre le texte s\u00e9lectionn\u00e9 en couleur normale" : "Mettre les mots s\u00e9lectionn\u00e9s en couleur (rouge de la charte)");
+    };
+    majLiens.set(majCouleur, ed);
+    ["keyup", "mouseup", "focus", "input"].forEach(ev => ed.addEventListener(ev, majCouleur));
+    bar.append(bc);
   }
   ed.contentEditable = "true"; ed.setAttribute("role", "textbox"); ed.setAttribute("aria-multiline", "true"); ed.setAttribute("aria-label", "Texte du bloc");
   ed.innerHTML = b.paras.length ? b.paras.map(p => `<p>${accHtml(p)}</p>`).join("") : "<p><br></p>";
@@ -694,22 +721,27 @@ function riche(b) {
   w.append(bar, ed); return w;
 }
 
-function uiOrn(b, corps) {
+function uiOrn(b, corps, enc) {                 // enc : vrai pour un encadre (pictogramme), faux pour un intertitre (decoration)
   const bloc = el("div"); bloc.style.cssText = "margin-top:12px;padding-top:8px;border-top:1px dashed #c9c9c9";
-  const tt = el("p", "", "D\u00e9coration de l\u2019intertitre (facultative)"); tt.style.cssText = "font-weight:bold;margin:0 0 6px"; bloc.appendChild(tt);
+  const tt = el("p", "", enc ? "Pictogramme dans l\u2019encadr\u00e9 (facultatif)" : "D\u00e9coration de l\u2019intertitre (facultative)"); tt.style.cssText = "font-weight:bold;margin:0 0 6px"; bloc.appendChild(tt);
   if (!b.orn) {
-    bloc.append(bouton("Choisir dans la banque\u2026", "Choisir une d\u00e9coration dans la banque pour cet intertitre", () => ouvrirBanque({ orn: b.id })),
-      el("p", "aide", "Un pictogramme ou un num\u00e9ro plac\u00e9 \u00e0 gauche ou \u00e0 droite du titre."));
+    bloc.append(bouton("Choisir dans la banque\u2026", (enc ? "Choisir un pictogramme dans la banque pour cet encadr\u00e9" : "Choisir une d\u00e9coration dans la banque pour cet intertitre"), () => ouvrirBanque({ orn: b.id })),
+      el("p", "aide", enc ? "Un pictogramme de la banque plac\u00e9 dans l\u2019encadr\u00e9, par exemple un porte-voix pour une annonce." : "Un pictogramme ou un num\u00e9ro plac\u00e9 \u00e0 gauche ou \u00e0 droite du titre."));
   } else {
     const o = b.orn, im = el("img", "vignette"); im.src = o.src; im.alt = ""; im.style.maxHeight = "60px"; bloc.appendChild(im);
     const sel = (id, lib, opts, val, f) => { const l = el("label", "", lib); l.htmlFor = id + b.id; const s2 = el("select"); s2.id = id + b.id; opts.forEach(([v, t]) => { const op = el("option", "", t); op.value = v; if (v === val) op.selected = true; s2.appendChild(op); }); s2.onchange = () => f(s2.value); bloc.append(l, s2); };
-    sel("oc", "Position", [["gauche", "\u00c0 gauche du titre"], ["droite", "\u00c0 droite du titre"]], o.cote, v => { o.cote = v; changed(); });
-    sel("ot", "Taille", [["petite", "M\u00eame hauteur que le titre"], ["moyenne", "Plus grande (\u00d71,5)"], ["grande", "Grande (\u00d72)"]], o.taille, v => { o.taille = v; changed(); });
+    if (enc) {
+      sel("oc", "Position", [["gauche", "\u00c0 gauche du texte"], ["droite", "\u00c0 droite du texte"], ["haut", "Au-dessus du texte"]], o.cote, v => { o.cote = v; changed(); });
+      sel("ot", "Taille", [["petite", "Petite (12 mm de haut)"], ["moyenne", "Moyenne (20 mm)"], ["grande", "Grande (32 mm)"]], o.taille, v => { o.taille = v; changed(); });
+    } else {
+      sel("oc", "Position", [["gauche", "\u00c0 gauche du titre"], ["droite", "\u00c0 droite du titre"]], o.cote, v => { o.cote = v; changed(); });
+      sel("ot", "Taille", [["petite", "M\u00eame hauteur que le titre"], ["moyenne", "Plus grande (\u00d71,5)"], ["grande", "Grande (\u00d72)"]], o.taille, v => { o.taille = v; changed(); });
+    }
     const d = el("label", "inline"), cd = el("input"); cd.type = "checkbox"; cd.checked = o.decoratif;
-    const la = el("label", "", "Texte alternatif de la d\u00e9coration"); la.htmlFor = "oa" + b.id;
+    const la = el("label", "", enc ? "Texte alternatif du pictogramme" : "Texte alternatif de la d\u00e9coration"); la.htmlFor = "oa" + b.id;
     const a = el("textarea"); a.id = "oa" + b.id; a.value = o.alt; a.disabled = o.decoratif; a.oninput = () => { o.alt = a.value; changed(); };
     cd.onchange = () => { o.decoratif = cd.checked; a.disabled = o.decoratif; changed(); };
-    d.append(cd, document.createTextNode("D\u00e9corative (le titre se suffit \u00e0 lui-m\u00eame)"));
+    d.append(cd, document.createTextNode(enc ? "D\u00e9coratif (le texte de l\u2019encadr\u00e9 se suffit \u00e0 lui-m\u00eame)" : "D\u00e9corative (le titre se suffit \u00e0 lui-m\u00eame)"));
     const aide = el("p", "aide", "\u00c0 renseigner si la d\u00e9coration porte un sens (par exemple un num\u00e9ro d\u2019\u00e9tape) ; \u00e0 marquer d\u00e9corative si elle ne fait qu\u2019embellir.");
     const bar = el("div"); bar.style.cssText = "display:flex;gap:8px;margin-top:8px";
     bar.append(bouton("Changer", "Changer la d\u00e9coration", () => ouvrirBanque({ orn: b.id })), bouton("Retirer", "Retirer la d\u00e9coration", () => { b.orn = null; renderEditeur(b.id); majApercu(); }));
@@ -763,6 +795,7 @@ function carte(b, i) {
     if (b.niveau) sel2("pt", "Appliquer le niveau \u00e0", [["premier", "Le premier paragraphe seulement"], ["tout", "Tous les paragraphes"]], b.portee, v => { b.portee = v; changed(); });
     sel2("al", "Alignement du texte", [["gauche", "Comme le reste du texte"], ["centre", "Centr\u00e9"]], b.align, v => { b.align = v; changed(); });
     corps.appendChild(riche(b));
+    uiOrn(b, corps, true);
   }
   if (b.type === "liste") {
     const l = el("label", "", "Type de liste"); l.htmlFor = "o" + b.id;
@@ -928,6 +961,15 @@ $("#dlgLien").addEventListener("close", e => {
 /* =====================================================================
    Projet : enregistrement, ouverture, brouillon
    ===================================================================== */
+/** Pictogramme / decoration lu dans un projet enregistre (valide, sinon null). */
+function lireOrn(o) {
+  const T = x => typeof x === "string" ? x : "";
+  if (!o || !/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(o.src || "")) return null;
+  return { banqueId: T(o.banqueId), alt: T(o.alt), decoratif: !!o.decoratif, cote: ["droite", "haut"].includes(o.cote) ? o.cote : "gauche",
+    taille: ["petite", "moyenne", "grande"].includes(o.taille) ? o.taille : "moyenne", src: o.src,
+    svg: /^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(o.svg || "") ? o.svg : "",
+    mime: o.src.startsWith("data:image/png") ? "image/png" : "image/jpeg", w: +o.w || 1, h: +o.h || 1 };
+}
 function chargerEtat(o) {
   if (!o || !Array.isArray(o.blocs)) throw new Error("fichier invalide");
   const T = x => typeof x === "string" ? x : "";
@@ -943,6 +985,7 @@ function chargerEtat(o) {
         mime: o.src.startsWith("data:image/png") ? "image/png" : "image/jpeg", w: +o.w || 1, h: +o.h || 1 };
     }
     if (n.type === "texte" || n.type === "encadre") { n.paras = (Array.isArray(b.paras) ? b.paras : []).map(nettoyerHtml).filter(p => texteDe(p).trim()); if (n.type === "encadre") { n.style = ["jaune", "rouge", "gris"].includes(b.style) ? b.style : "jaune"; n.niveau = Math.max(0, Math.min(6, parseInt(b.niveau) || 0)); n.portee = b.portee === "tout" ? "tout" : "premier"; n.align = b.align === "centre" ? "centre" : "gauche"; } }
+    if (n.type === "encadre") n.orn = lireOrn(b.orn);
     if (n.type === "liste") { n.ordonnee = !!b.ordonnee; n.items = T(b.items); }
     if (n.type === "image") {
       if (/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(b.src || "")) { n.src = b.src; n.mime = b.src.startsWith("data:image/png") ? "image/png" : "image/jpeg"; n.w = +b.w || 0; n.h = +b.h || 0; }

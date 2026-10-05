@@ -66,7 +66,7 @@ Un tract est une suite de blocs. Sous la liste, « Ajouter un bloc » propose : 
 
 - **G** (gras) et **I** (italique) ;
 - **Lien** : sélectionnez d'abord les mots, puis cliquez, puis saisissez l'adresse (`https://…` ou `mailto:…`). Choisissez des mots qui disent où mène le lien (« le site du syndicat »), jamais « cliquez ici ». Le même bouton devient **Retirer le lien** dès que le curseur ou la sélection se trouve dans un lien : cliquez dessus pour retirer ce lien (les mots restent) ;
-- **Couleur** : sélectionnez des mots puis cliquez pour les mettre dans la couleur d'accentuation de la charte (la couleur est choisie par la charte : son contraste est contrôlé). **Couleur normale** annule. Non disponible dans les encadrés, dont le fond change.
+- **Couleur** : sélectionnez des mots puis cliquez pour les mettre dans la couleur d'accentuation de la charte (la couleur est choisie par la charte : son contraste est contrôlé). Comme pour les liens, le même bouton devient **Couleur normale** dès que le curseur ou la sélection est dans des mots colorés : cliquez dessus pour annuler. Non disponible dans les encadrés, dont le fond change.
 
 **Liste** : un élément par ligne ; à puces ou numérotée.
 
@@ -76,7 +76,7 @@ Un tract est une suite de blocs. Sous la liste, « Ajouter un bloc » propose : 
 - Taille, crédit (légende), inclinaison éventuelle.
 - Option « texte à côté » : l'image et un texte sont placés côte à côte.
 
-**Encadré** : un texte mis en valeur sur fond jaune, rouge ou gris (selon la charte). Il peut commencer par un titre.
+**Encadré** : un texte mis en valeur sur fond jaune, rouge ou gris (selon la charte). Il peut commencer par un titre. Vous pouvez y ajouter un **pictogramme** pris dans la banque (par exemple un porte-voix pour une annonce) : « Choisir un pictogramme dans la banque », puis sa position (à gauche, à droite ou au-dessus du texte) et sa taille. Comme pour toute image, indiquez son texte alternatif, ou cochez « Décoratif » s'il ne fait qu'embellir. Sur un encadré rouge, choisissez un pictogramme clair : un pictogramme rouge s'y verrait à peine.
 
 **Banque d'éléments** : ouvre la banque pour insérer un pictogramme, un numéro ou un séparateur. Chaque élément porte déjà son texte alternatif.
 

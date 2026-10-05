@@ -119,6 +119,14 @@ dialog.large{max-width:760px;width:92vw}
 .tr-corps li{margin-bottom:1mm}
 .tr-corps .enc{padding:4mm 5mm;margin:0 0 4mm;break-inside:avoid}
 .tr-corps .enc p:last-child{margin-bottom:0}
+.tract .tr-corps .enc.avec-orn{display:flex;align-items:center;gap:4mm}
+.tract .tr-corps .enc.avec-orn.orn-haut{flex-direction:column;align-items:flex-start;gap:2.5mm}
+.tract .tr-corps .enc.avec-orn.centre.orn-haut{align-items:center}
+.tract .tr-corps .enc .enc-txt{flex:1;min-width:0}
+.tract .tr-corps .enc img.orn-enc{width:auto;flex:none;max-width:40%}
+.tract .tr-corps .enc img.orn-enc-petite{height:12mm}
+.tract .tr-corps .enc img.orn-enc-moyenne{height:20mm}
+.tract .tr-corps .enc img.orn-enc-grande{height:32mm}
 .tract .tr-corps .enc h1,.tract .tr-corps .enc h2,.tract .tr-corps .enc h3,.tract .tr-corps .enc h4,.tract .tr-corps .enc h5,.tract .tr-corps .enc h6{border:0;padding:0;margin:0 0 2.5mm;line-height:1.2;font-weight:bold;color:inherit;break-after:avoid}
 .tract .tr-corps .enc h1{font-size:20pt}.tract .tr-corps .enc h2{font-size:16pt}.tract .tr-corps .enc h3{font-size:14pt}.tract .tr-corps .enc h4{font-size:13pt}.tract .tr-corps .enc h5{font-size:12pt}.tract .tr-corps .enc h6{font-size:12pt}
 .tract .tr-corps .enc :last-child{margin-bottom:0}
