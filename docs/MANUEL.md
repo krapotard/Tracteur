@@ -90,6 +90,8 @@ Un tract est une suite de blocs. Sous la liste, « Ajouter un bloc » propose : 
 
 Cliquez sur **PDF seul**, **Mail seul (.eml)** ou **Exporter PDF + mail**. La création du PDF peut prendre **quelques secondes** : un bandeau jaune avec une roue qui tourne s'affiche sous les boutons, et les boutons d'export sont grisés jusqu'à la fin. Ne fermez pas la page pendant ce temps.
 
+Dans le mail, avec l'en-tête simple (logo et nom de l'organisation), **le titre du tract s'affiche à droite du logo, à la place du nom** ; il n'est pas répété sous l'en-tête. Avec un en-tête en image, le titre reste sous l'image.
+
 Pour envoyer le mail : double-cliquez sur le fichier `.eml` téléchargé. Il s'ouvre dans votre messagerie comme un brouillon (testé avec Outlook), avec le PDF en pièce jointe. Relisez, ajoutez les destinataires, envoyez.
 
 Si le PDF ne peut pas être créé par le serveur, Tracteur vous propose d'ouvrir la fenêtre d'impression du navigateur (puis « Enregistrer au format PDF »), ou de créer le mail sans PDF joint. Ce PDF-là n'est en revanche pas balisé de la même façon.
