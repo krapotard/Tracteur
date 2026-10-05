@@ -21,10 +21,10 @@ permissions:
 
 jobs:
   zip:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Récupérer le code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.etiquette || github.ref }}
 
