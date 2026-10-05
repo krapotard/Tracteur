@@ -74,7 +74,7 @@ function typo(h) {
   return h.split(/(<[^>]+>)/).map((s, i) => i % 2 ? s :
     s.replace(/ +([;:!?%\u00bb])/g, "\u00A0$1")
      .replace(/(\u00ab) +/g, "$1\u00A0")
-     .replace(/(?<!\d)(\d{1,3}) (?=\d{3}(?!\d))/g, "$1\u00A0")).join("");
+     .replace(/(?<!\d)(\d{1,3}) (?=\d{3}(?!\d))/g, "$1\u00A0")).join("").replace(/(?<!\s)<br>/g, " <br>");      // un saut de ligne garde une espace : les lecteurs d'ecran ne collent pas les mots
 }
 const typoTxt = s => typo(esc(s));
 
@@ -692,7 +692,8 @@ function riche(b) {
   };
   majLiens.set(majLien, ed);
   ["keyup", "mouseup", "focus", "input"].forEach(ev => ed.addEventListener(ev, majLien));
-  bar.append(bg, bi, bl);
+  const bsl = bouton("Saut de ligne", "Aller \u00e0 la ligne sans changer de paragraphe (comme Maj + Entr\u00e9e)", () => { ed.focus(); document.execCommand("insertLineBreak"); ed.dispatchEvent(new Event("input")); });
+  bar.append(bg, bi, bl, bsl);
   if (b.type !== "encadre") {
     const sel = () => { const x = getSelection(); return x.rangeCount && !x.isCollapsed && ed.contains(x.anchorNode); };
     const colore = () => {                       // la selection (ou le curseur) est-elle deja dans la couleur d'accentuation ?
@@ -715,6 +716,7 @@ function riche(b) {
     ["keyup", "mouseup", "focus", "input"].forEach(ev => ed.addEventListener(ev, majCouleur));
     bar.append(bc);
   }
+  if (b.type === "encadre" && b.niveau) ed.dataset.titre = b.portee === "tout" ? "tout" : "premier";      // les paragraphes qui seront des titres sont marqu\u00e9s dans la zone
   ed.contentEditable = "true"; ed.setAttribute("role", "textbox"); ed.setAttribute("aria-multiline", "true"); ed.setAttribute("aria-label", "Texte du bloc");
   ed.innerHTML = b.paras.length ? b.paras.map(p => `<p>${accHtml(p)}</p>`).join("") : "<p><br></p>";
   ed.addEventListener("input", () => { b.paras = extraireParas(ed); changed(); });
@@ -808,7 +810,10 @@ function carte(b, i) {
     const sel2 = (id, lib, opts, val, f) => { const l2 = el("label", "", lib); l2.htmlFor = id + b.id; const s2 = el("select"); s2.id = id + b.id; opts.forEach(([v, t]) => { const o = el("option", "", t); o.value = v; if (String(v) === String(val)) o.selected = true; s2.appendChild(o); }); s2.onchange = () => f(s2.value); corps.append(l2, s2); };
     corps.append(l, s);
     sel2("nv", "Niveau du texte", [[0, "Paragraphe (texte normal)"], ...[1, 2, 3, 4, 5, 6].map(n => [n, `Titre de niveau ${n} (H${n})`])], b.niveau || 0, v => { b.niveau = +v; renderEditeur(b.id); majApercu(); });
-    if (b.niveau) sel2("pt", "Appliquer le niveau \u00e0", [["premier", "Le premier paragraphe seulement"], ["tout", "Tous les paragraphes"]], b.portee, v => { b.portee = v; changed(); });
+    if (b.niveau) {
+      sel2("pt", "Appliquer le niveau \u00e0", [["premier", "Le premier paragraphe seulement"], ["tout", "Tous les paragraphes"]], b.portee, v => { b.portee = v; renderEditeur(b.id); majApercu(); });
+      corps.appendChild(el("p", "aide", "Les paragraphes qui deviendront des titres sont marqu\u00e9s d\u2019un trait rouge dans la zone de texte ci-dessous. Entr\u00e9e cr\u00e9e un nouveau paragraphe (donc un nouveau titre si vous avez choisi \u00ab Tous les paragraphes \u00bb). Pour faire tenir un seul titre sur deux lignes, utilisez Maj + Entr\u00e9e ou le bouton \u00ab Saut de ligne \u00bb."));
+    }
     sel2("al", "Alignement du texte", [["gauche", "Comme le reste du texte"], ["centre", "Centr\u00e9"]], b.align, v => { b.align = v; changed(); });
     corps.appendChild(riche(b));
     uiOrn(b, corps, true);
