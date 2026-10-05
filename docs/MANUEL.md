@@ -65,7 +65,7 @@ Un tract est une suite de blocs. Sous la liste, « Ajouter un bloc » propose : 
 **Texte** : un ou plusieurs paragraphes. Dans la barre du bloc :
 
 - **G** (gras) et **I** (italique) ;
-- **Lien** : sélectionnez d'abord les mots, puis cliquez, puis saisissez l'adresse (`https://…` ou `mailto:…`). Choisissez des mots qui disent où mène le lien (« le site du syndicat »), jamais « cliquez ici » ;
+- **Lien** : sélectionnez d'abord les mots, puis cliquez, puis saisissez l'adresse (`https://…` ou `mailto:…`). Choisissez des mots qui disent où mène le lien (« le site du syndicat »), jamais « cliquez ici ». Le même bouton devient **Retirer le lien** dès que le curseur ou la sélection se trouve dans un lien : cliquez dessus pour retirer ce lien (les mots restent) ;
 - **Couleur** : sélectionnez des mots puis cliquez pour les mettre dans la couleur d'accentuation de la charte (la couleur est choisie par la charte : son contraste est contrôlé). **Couleur normale** annule. Non disponible dans les encadrés, dont le fond change.
 
 **Liste** : un élément par ligne ; à puces ou numérotée.
