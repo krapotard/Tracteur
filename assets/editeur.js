@@ -134,6 +134,7 @@ function telecharger(blob, nom) {
 /* =====================================================================
    \u00c9tat
    ===================================================================== */
+const rotOrn = o => Math.max(-180, Math.min(180, Math.round((parseFloat(o && o.rot) || 0) * 2) / 2));       // inclinaison du pictogramme d'un encadre
 function rotEff(b) { if (b.type !== "image") return 0; const v = parseFloat(b.rot) || 0; return Math.max(-180, Math.min(180, Math.round(v * 2) / 2)); }
 const PTN = { 1: 20, 2: 16, 3: 14, 4: 13, 5: 12, 6: 12 };
 const stNiv = n => (n >= 5 ? "font-style:italic;" : "") + (n === 6 ? "font-weight:normal;" : "");
@@ -296,7 +297,9 @@ function tractHtml() {
       const L = b.niveau | 0, tg = i => L && (b.portee === "tout" || i === 0) ? "h" + L : "p";
       const txt = b.paras.map((p, i) => `<${tg(i)}>${typo(p)}</${tg(i)}>`).join(""), o = b.orn, centre = b.align === "centre" ? " centre" : "";
       if (!o) return `<div class="enc enc-${b.style}${centre}">${txt}</div>`;
-      const im = `<img class="orn-enc orn-enc-${o.taille}" src="${o.svg || o.src}" alt="${o.decoratif ? "" : escA(o.alt)}">`;
+      const ro = rotOrn(o), mx = margesRotX[b.id] || 0;
+      const rotAttr = ro ? ` rot" data-rot="${ro}" style="transform:rotate(${ro}deg);margin:${margesRot[b.id] || 0}px ${mx}px` : "";
+      const im = `<img class="orn-enc orn-enc-${o.taille}${rotAttr}" src="${o.svg || o.src}" alt="${o.decoratif ? "" : escA(o.alt)}">`;
       return `<div class="enc enc-${b.style}${centre} avec-orn orn-${o.cote}">${o.cote === "droite" ? `<div class="enc-txt">${txt}</div>${im}` : `${im}<div class="enc-txt">${txt}</div>`}</div>`;
     }
     return "";
@@ -380,8 +383,10 @@ function mailHtml(apercu) {
       if (o) {
         n++; const cid = `img${n}@tract.local`, ext = o.mime === "image/png" ? "png" : "jpg";
         images.push({ cid, mime: o.mime, nom: `image${n}.${ext}`, b64: o.src.split(",")[1] });
-        const hPx = { petite: 45, moyenne: 76, grande: 121 }[o.taille] || 76, wPx = Math.round(hPx * o.w / o.h);
-        const im = `<img src="${apercu ? o.src : "cid:" + cid}" alt="${o.decoratif ? "" : escA(o.alt)}" width="${wPx}" height="${hPx}" style="width:${wPx}px;height:${hPx}px;border:0;display:block">`;
+        let hPx = { petite: 45, moyenne: 76, grande: 121 }[o.taille] || 76, wPx = Math.round(hPx * o.w / o.h), src = o.src;
+        const ro = rotOrn(o), rot = ro && o._rot && o._rot.cle === ro + "|" + o.src.length ? o._rot : null;
+        if (rot) { images[images.length - 1].mime = rot.mime; images[images.length - 1].b64 = rot.src.split(",")[1]; src = rot.src; wPx = Math.round(wPx * rot.w / o.w); hPx = Math.round(wPx * rot.h / rot.w); }
+        const im = `<img src="${apercu ? src : "cid:" + cid}" alt="${o.decoratif ? "" : escA(o.alt)}" width="${wPx}" height="${hPx}" style="width:${wPx}px;height:${hPx}px;border:0;display:block">`;
         if (o.cote === "haut") dedans = `<div style="margin:0 0 8px 0;text-align:${al}"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="${al}"><tr><td>${im}</td></tr></table></div>\n` + txt;
         else {
           const droite = o.cote === "droite";
@@ -490,7 +495,7 @@ function telechargerEml(pdf) { telecharger(new Blob([construireEml(pdf)], { type
 /* =====================================================================
    V\u00e9rifications d'accessibilit\u00e9
    ===================================================================== */
-let pagesTract = 1, alertesGeo = [], margesRot = {}, mainMinPx = 0, risquePageBlanche = false;
+let pagesTract = 1, alertesGeo = [], margesRot = {}, margesRotX = {}, mainMinPx = 0, risquePageBlanche = false;
 const PIED_MAX_MM = 42, PIED_MIN_MM = 14;     // hauteur de l'image de pied : elle r\u00e9tr\u00e9cit d'elle-m\u00eame pour \u00e9viter une page de plus
 let piedMm = PIED_MAX_MM, natMm = 0, piedSeul = false;
 const LIENS_VAGUES = /^((voir|cliquez|clique|cliquer|lire)( ici| l\u00e0)|ici|l\u00e0|lien|ce lien|en savoir plus|plus d['\u2019]infos?|voir|suite|lire la suite|par ici)$/i;
@@ -581,13 +586,15 @@ function mesurer() {
 }
 function mesurerPasse() {
   const m = $("#mesure"); m.innerHTML = tractHtml();
-  const nv = {}; let diff = false;
+  const nv = {}, nvx = {}; let diff = false;
   $$("#mesure .rot").forEach(e => {
     const id = e.closest(".bl").dataset.b, r = +e.dataset.rot * Math.PI / 180, w = e.offsetWidth, h = e.offsetHeight;
     const mg = Math.max(0, Math.round((w * Math.abs(Math.sin(r)) + h * (Math.abs(Math.cos(r)) - 1)) / 2));
     nv[id] = mg; if ((margesRot[id] || 0) !== mg) diff = true;
+    const mgx = Math.max(0, Math.round((w * (Math.abs(Math.cos(r)) - 1) + h * Math.abs(Math.sin(r))) / 2));       // marge laterale (pictogramme d'un encadre)
+    nvx[id] = mgx; if ((margesRotX[id] || 0) !== mgx) diff = true;
   });
-  if (diff || Object.keys(margesRot).some(id => !(id in nv))) { margesRot = nv; m.innerHTML = tractHtml(); }
+  if (diff || Object.keys(margesRot).some(id => !(id in nv))) { margesRot = nv; margesRotX = nvx; m.innerHTML = tractHtml(); }
   const t = $("#mesure .tract"), mmPx = 96 / 25.4;
   t.style.setProperty("--mmin", "0px");
   const hh = t.querySelector(".tr-head, .tr-masthead, .tete-compose").offsetHeight, hf = t.querySelector("footer").offsetHeight, hm = t.querySelector(".tr-main").offsetHeight;
@@ -742,6 +749,15 @@ function uiOrn(b, corps, enc) {                 // enc : vrai pour un encadre (p
     const a = el("textarea"); a.id = "oa" + b.id; a.value = o.alt; a.disabled = o.decoratif; a.oninput = () => { o.alt = a.value; changed(); };
     cd.onchange = () => { o.decoratif = cd.checked; a.disabled = o.decoratif; changed(); };
     d.append(cd, document.createTextNode(enc ? "D\u00e9coratif (le texte de l\u2019encadr\u00e9 se suffit \u00e0 lui-m\u00eame)" : "D\u00e9corative (le titre se suffit \u00e0 lui-m\u00eame)"));
+    if (enc) {
+      const lr = el("label", "", "Inclinaison du pictogramme, en degr\u00e9s (de \u2212180 \u00e0 180 ; 0 = droit)"); lr.htmlFor = "orot" + b.id;
+      const ir = el("input"); ir.type = "number"; ir.id = "orot" + b.id; ir.min = -180; ir.max = 180; ir.step = "0.5"; ir.value = rotOrn(o);
+      ir.oninput = () => { const v = parseFloat(ir.value); o.rot = isNaN(v) ? 0 : v; changed(); };
+      ir.onchange = () => { o.rot = rotOrn(o); ir.value = o.rot; changed(); };
+      const raz = bouton("Remettre droit", "Remettre le pictogramme droit", () => { o.rot = 0; ir.value = 0; changed(); });
+      const rl = el("div"); rl.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap"; rl.append(ir, raz);
+      bloc.append(lr, rl, el("p", "aide", "Seul le pictogramme est inclin\u00e9 (dans le PDF et dans le mail) ; le texte reste droit."));
+    }
     const aide = el("p", "aide", "\u00c0 renseigner si la d\u00e9coration porte un sens (par exemple un num\u00e9ro d\u2019\u00e9tape) ; \u00e0 marquer d\u00e9corative si elle ne fait qu\u2019embellir.");
     const bar = el("div"); bar.style.cssText = "display:flex;gap:8px;margin-top:8px";
     bar.append(bouton("Changer", "Changer la d\u00e9coration", () => ouvrirBanque({ orn: b.id })), bouton("Retirer", "Retirer la d\u00e9coration", () => { b.orn = null; renderEditeur(b.id); majApercu(); }));
@@ -968,7 +984,7 @@ function lireOrn(o) {
   return { banqueId: T(o.banqueId), alt: T(o.alt), decoratif: !!o.decoratif, cote: ["droite", "haut"].includes(o.cote) ? o.cote : "gauche",
     taille: ["petite", "moyenne", "grande"].includes(o.taille) ? o.taille : "moyenne", src: o.src,
     svg: /^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(o.svg || "") ? o.svg : "",
-    mime: o.src.startsWith("data:image/png") ? "image/png" : "image/jpeg", w: +o.w || 1, h: +o.h || 1 };
+    rot: rotOrn(o), mime: o.src.startsWith("data:image/png") ? "image/png" : "image/jpeg", w: +o.w || 1, h: +o.h || 1 };
 }
 function chargerEtat(o) {
   if (!o || !Array.isArray(o.blocs)) throw new Error("fichier invalide");
@@ -1031,6 +1047,13 @@ function rotaterImage(src, w, h, deg, mime) {
 }
 async function preparerRotations() {
   for (const b of S.blocs) {
+    if (b.type === "encadre" && b.orn) {                // pictogramme incline d'un encadre
+      const o = b.orn, ro = rotOrn(o);
+      if (!ro || !o.w || !o.h) { delete o._rot; continue; }
+      const cle = ro + "|" + o.src.length;
+      if (!o._rot || o._rot.cle !== cle) { try { o._rot = Object.assign({ cle }, await rotaterImage(o.src, o.w, o.h, ro, o.mime)); } catch (e) { delete o._rot; } }
+      continue;
+    }
     if (b.type !== "image" || !b.src) continue;
     const r = rotEff(b);
     if (!r || !b.w || !b.h) { delete b._rot; continue; }
@@ -1126,7 +1149,7 @@ function svgVersPng(src, w, h) {
 let banqueCible = null;
 async function appliquerOrn(e) {
   const b = S.blocs.find(x => x.id === banqueCible.orn); if (!b) return;
-  const o = { banqueId: e.id, alt: e.alt || "", decoratif: !!e.deco, cote: (b.orn && b.orn.cote) || "gauche", taille: (b.orn && b.orn.taille) || "moyenne", src: "", svg: "", mime: "", w: 0, h: 0 };
+  const o = { banqueId: e.id, alt: e.alt || "", decoratif: !!e.deco, cote: (b.orn && b.orn.cote) || "gauche", taille: (b.orn && b.orn.taille) || "moyenne", rot: (b.orn && b.orn.rot) || 0, src: "", svg: "", mime: "", w: 0, h: 0 };
   try {
     if (e.src.startsWith("data:image/svg+xml")) { const W = 300, H = Math.max(1, Math.round(W * e.h / e.w)); o.svg = e.src; o.src = await svgVersPng(e.src, W, H); o.mime = "image/png"; o.w = W; o.h = H; }
     else { o.src = e.src; o.mime = e.src.startsWith("data:image/png") ? "image/png" : "image/jpeg"; o.w = e.w; o.h = e.h; }
