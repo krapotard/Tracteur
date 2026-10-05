@@ -639,6 +639,9 @@ $$(".tab").forEach(t => t.addEventListener("click", () => montrerOnglet(t.id)));
    ===================================================================== */
 const NOMS = { intertitre: "Intertitre", texte: "Texte", liste: "Liste", image: "Image", encadre: "Encadr\u00e9" };
 let rangeSauvee = null, edSauve = null;
+/* Bouton unique « Lien » / « Retirer le lien » : son libelle suit la selection (dans un lien ou non) */
+const majLiens = new Map();
+document.addEventListener("selectionchange", () => majLiens.forEach((ed, f) => { if (ed.isConnected) f(); else majLiens.delete(f); }));
 
 function bouton(txt, aria, f, cls) { const b = el("button", "btn" + (cls ? " " + cls : ""), txt); b.type = "button"; b.setAttribute("aria-label", aria); b.addEventListener("click", f); return b; }
 
@@ -647,13 +650,24 @@ function riche(b) {
   const cmd = c => () => { ed.focus(); document.execCommand(c); ed.dispatchEvent(new Event("input")); };
   const bg = bouton("G", "Gras", cmd("bold")), bi = bouton("I", "Italique", cmd("italic"));
   bg.style.fontWeight = "bold"; bi.style.fontStyle = "italic";
+  const lienSel = () => {
+    const s = getSelection(); if (!s.rangeCount || !ed.contains(s.anchorNode)) return false;
+    const n = s.anchorNode, e = n.nodeType === 1 ? n : n.parentElement, a = e && e.closest("a");
+    return !!(a && ed.contains(a));
+  };
   const bl = bouton("Lien", "Ajouter un lien au texte s\u00e9lectionn\u00e9", () => {
+    if (lienSel()) { cmd("unlink")(); majLien(); return; }
     const sel = getSelection();
     if (!sel.rangeCount || sel.isCollapsed || !ed.contains(sel.anchorNode)) { toast("S\u00e9lectionnez d\u2019abord, dans le texte, les mots qui serviront de lien."); return; }
     rangeSauvee = sel.getRangeAt(0).cloneRange(); edSauve = ed; $("#lienUrl").value = ""; $("#dlgLien").showModal(); $("#lienUrl").focus();
   });
-  const bu = bouton("Retirer le lien", "Retirer le lien du texte s\u00e9lectionn\u00e9", cmd("unlink"));
-  bar.append(bg, bi, bl, bu);
+  const majLien = () => {
+    const dans = lienSel(); bl.textContent = dans ? "Retirer le lien" : "Lien";
+    bl.setAttribute("aria-label", dans ? "Retirer le lien du texte s\u00e9lectionn\u00e9" : "Ajouter un lien au texte s\u00e9lectionn\u00e9");
+  };
+  majLiens.set(majLien, ed);
+  ["keyup", "mouseup", "focus", "input"].forEach(ev => ed.addEventListener(ev, majLien));
+  bar.append(bg, bi, bl);
   if (b.type !== "encadre") {
     const sel = () => { const x = getSelection(); return x.rangeCount && !x.isCollapsed && ed.contains(x.anchorNode); };
     const bc = bouton("Couleur", "Mettre les mots s\u00e9lectionn\u00e9s en couleur (rouge de la charte)", () => {
