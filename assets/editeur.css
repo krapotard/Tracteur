@@ -52,6 +52,11 @@ details.mode ul{margin:8px 0 0 18px;padding:0}
 .riche-bar .btn{padding:3px 10px}
 .riche-zone{min-height:80px;border:1px solid #8a8a8a;border-radius:6px;padding:6px 9px;background:#fff;line-height:1.45}
 .riche-zone p{margin:0 0 8px}
+.riche-zone[data-liste]{counter-reset:elt}
+.riche-zone[data-liste] p{position:relative;padding-left:26px;counter-increment:elt}
+.riche-zone[data-liste] p::before{position:absolute;left:6px;font-weight:bold}
+.riche-zone[data-liste=ul] p::before{content:"\2022"}
+.riche-zone[data-liste=ol] p::before{content:counter(elt) "."}
 .riche-zone[data-titre=premier] p:first-child,.riche-zone[data-titre=tout] p{font-weight:bold;border-left:4px solid var(--rouge);padding-left:8px}
 .riche-zone a{color:var(--lien)}
 .ajout{padding:10px 14px;border-top:1px solid var(--bord);background:#fafafa}

@@ -148,7 +148,7 @@ function nouveauBloc(type) {
   const b = { id: uid(), type, pleine: false, rot: 0, police: "" };
   if (type === "intertitre") Object.assign(b, { niveau: 2, texte: "", orn: null });
   if (type === "texte") Object.assign(b, { paras: [] });
-  if (type === "liste") Object.assign(b, { ordonnee: false, items: "" });
+  if (type === "liste") Object.assign(b, { ordonnee: false, paras: [] });
   if (type === "image") Object.assign(b, { src: "", svg: "", mime: "", w: 0, h: 0, alt: "", deco: false, credit: "", taille: "pleine", banqueId: "", cote: "", dispo: "cote", paras: [] });
   if (type === "encadre") Object.assign(b, { style: "jaune", paras: [], niveau: 0, portee: "premier", align: "gauche", orn: null });
   return b;
@@ -166,7 +166,7 @@ function exemple() {
         "Excepteur sint occaecat cupidatat non proident, <strong>sunt in culpa qui officia deserunt mollit anim id est laborum.</strong> Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium."),
       h("Nemo enim ipsam voluptatem"),
       Object.assign(nouveauBloc("encadre"), { paras: ["<strong>Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse.</strong>"] }),
-      Object.assign(nouveauBloc("liste"), { items: "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.\nUt enim ad minima veniam, quis nostrum exercitationem ullam corporis.\nAt vero eos et accusamus et iusto odio dignissimos ducimus." }),
+      Object.assign(nouveauBloc("liste"), { paras: ["Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.", "Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis.", "At vero eos et accusamus et <strong>iusto odio dignissimos</strong> ducimus."] }),
       h("Et harum quidem rerum facilis est et expedita distinctio"),
       t("<strong>Nam libero tempore, cum soluta nobis est eligendi optio :</strong> cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.",
         "Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet, <strong>ut et voluptates repudiandae sint et molestiae non recusandae.</strong>")
@@ -279,8 +279,8 @@ function tractHtml() {
     }
     if (b.type === "texte") return b.paras.map(p => `<p>${typo(p)}</p>`).join("");
     if (b.type === "liste") {
-      const it = b.items.split("\n").map(x => x.trim()).filter(Boolean);
-      return it.length ? `<${b.ordonnee ? "ol" : "ul"}>${it.map(x => `<li>${typoTxt(x)}</li>`).join("")}</${b.ordonnee ? "ol" : "ul"}>` : "";
+      const it = b.paras;
+      return it.length ? `<${b.ordonnee ? "ol" : "ul"}>${it.map(x => `<li>${typo(x)}</li>`).join("")}</${b.ordonnee ? "ol" : "ul"}>` : "";
     }
     if (b.type === "image") {
       if (!b.src) return "";
@@ -347,9 +347,9 @@ function mailHtml(apercu) {
     }
     if (b.type === "texte") return b.paras.map(p => `<p style="${Fb}${pSr}">${inlineMail(p, C.lien, Fb)}</p>`).join("\n");
     if (b.type === "liste") {
-      const it = b.items.split("\n").map(x => x.trim()).filter(Boolean); if (!it.length) return "";
+      const it = b.paras; if (!it.length) return "";
       const tag = b.ordonnee ? "ol" : "ul";
-      return `<${tag} style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 12px 24px;padding:0;color:${bt}">` + it.map(x => `<li style="margin-bottom:6px">${typoTxt(x)}</li>`).join("\n") + `</${tag}>`;
+      return `<${tag} style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 12px 24px;padding:0;color:${bt}">` + it.map(x => `<li style="margin-bottom:6px">${inlineMail(x, C.lien, Fb)}</li>`).join("\n") + `</${tag}>`;
     }
     if (b.type === "image") {
       if (!b.src) return "";
@@ -458,7 +458,7 @@ function texteBrut() {
   S.blocs.forEach(b => {
     if (b.type === "intertitre" && b.texte.trim()) l.push("", b.texte.trim(), "");
     if (b.type === "texte" || b.type === "encadre") b.paras.forEach(p => l.push(plain(p), ""));
-    if (b.type === "liste") b.items.split("\n").filter(x => x.trim()).forEach(x => l.push("- " + x.trim()));
+    if (b.type === "liste") b.paras.forEach(x => l.push("- " + plain(x)));
     if (b.type === "image" && b.src && !b.deco && b.alt.trim()) l.push("[Image : " + b.alt.trim() + "]", "");
     if (b.type === "image" && b.src && b.cote) b.paras.forEach(p => l.push(plain(p), ""));
   });
@@ -509,7 +509,7 @@ function verifier() {
   S.blocs.forEach((b, i) => {
     const nom = `Bloc ${i + 1}`;
     if (POLICES[policeBloc(b)].affichage && (b.type === "texte" || b.type === "encadre" || b.type === "liste")) {
-      const lg = b.type === "liste" ? b.items.length : b.paras.reduce((n, p) => n + texteDe(p).length, 0);
+      const lg = b.paras.reduce((n, p) => n + texteDe(p).length, 0);
       if (lg > 150) add("avert", `${nom} : cette police d\u00e9corative convient mal \u00e0 un long texte (r\u00e9servez-la aux titres courts).`, b.id);
     }
     if (b.type === "encadre" && b.orn && !b.orn.decoratif && !b.orn.alt.trim()) add("erreur", `${nom} : le pictogramme de l\u2019encadr\u00e9 n\u2019a pas de texte alternatif (ou cochez \u00ab D\u00e9coratif \u00bb).`, b.id);
@@ -543,7 +543,7 @@ function verifier() {
       }
       controleParas();
     }
-    if (b.type === "liste" && !b.items.trim()) add("avert", `${nom} (liste) : vide, elle sera ignor\u00e9e.`, b.id);
+    if (b.type === "liste" && !b.paras.length) add("avert", `${nom} (liste) : vide, elle sera ignor\u00e9e.`, b.id);
     if (b.type === "image") {
       if (!b.src) { add("erreur", `${nom} (image) : aucune image choisie.`, b.id); return; }
       if (b.cote) { if (b.paras.length) controleParas(); else add("avert", `${nom} (image) : le texte \u00e0 c\u00f4t\u00e9 de l\u2019image est vide, il sera ignor\u00e9.`, b.id); }
@@ -562,7 +562,7 @@ function verifier() {
   const manque = (id, texte) => { const p = POLICES[id]; return p && p.manque ? [...new Set([...texte].filter(c => p.manque.includes(c)))] : []; };
   { const m = manque(S.policeTitre && POLICES[S.policeTitre] ? S.policeTitre : S.police, titreSimple()); if (m.length) add("avert", `Le titre contient \u00ab ${m.join(" ")} \u00bb, absent de la police choisie : ce caract\u00e8re s\u2019affichera dans une autre police.`, null); }
   S.blocs.forEach((b, i) => {
-    const t = b.type === "intertitre" ? b.texte : b.type === "liste" ? b.items : (b.paras || []).map(texteDe).join(" ");
+    const t = b.type === "intertitre" ? b.texte : (b.paras || []).map(texteDe).join(" ");
     const m = manque(policeBloc(b), t); if (m.length) add("avert", `Bloc ${i + 1} : \u00ab ${m.join(" ")} \u00bb est absent de la police choisie et s\u2019affichera dans une autre police.`, b.id);
   });
   alertesGeo.forEach(a => add("avert", a.msg, a.id));
@@ -717,7 +717,8 @@ function riche(b) {
     bar.append(bc);
   }
   if (b.type === "encadre" && b.niveau) ed.dataset.titre = b.portee === "tout" ? "tout" : "premier";      // les paragraphes qui seront des titres sont marqu\u00e9s dans la zone
-  ed.contentEditable = "true"; ed.setAttribute("role", "textbox"); ed.setAttribute("aria-multiline", "true"); ed.setAttribute("aria-label", "Texte du bloc");
+  if (b.type === "liste") ed.dataset.liste = b.ordonnee ? "ol" : "ul";
+  ed.contentEditable = "true"; ed.setAttribute("role", "textbox"); ed.setAttribute("aria-multiline", "true"); ed.setAttribute("aria-label", b.type === "liste" ? "\u00c9l\u00e9ments de la liste, un par paragraphe" : "Texte du bloc");
   ed.innerHTML = b.paras.length ? b.paras.map(p => `<p>${accHtml(p)}</p>`).join("") : "<p><br></p>";
   ed.addEventListener("input", () => { b.paras = extraireParas(ed); changed(); });
   ed.addEventListener("paste", e => {
@@ -822,10 +823,8 @@ function carte(b, i) {
     const l = el("label", "", "Type de liste"); l.htmlFor = "o" + b.id;
     const s = el("select"); s.id = "o" + b.id;
     [[false, "Puces"], [true, "Num\u00e9rot\u00e9e"]].forEach(([v, t]) => { const o = el("option", "", t); o.value = v; if (b.ordonnee === v) o.selected = true; s.appendChild(o); });
-    s.onchange = () => { b.ordonnee = s.value === "true"; changed(); };
-    const l2 = el("label", "", "\u00c9l\u00e9ments (un par ligne)"); l2.htmlFor = "i" + b.id;
-    const ta = el("textarea"); ta.id = "i" + b.id; ta.value = b.items; ta.oninput = () => { b.items = ta.value; changed(); };
-    corps.append(l, s, l2, ta);
+    s.onchange = () => { b.ordonnee = s.value === "true"; renderEditeur(b.id); majApercu(); };
+    corps.append(l, s, el("p", "aide", "Un \u00e9l\u00e9ment par paragraphe : Entr\u00e9e passe \u00e0 l\u2019\u00e9l\u00e9ment suivant. Les boutons G, I, Lien et Couleur fonctionnent comme dans un texte."), riche(b));
   }
   if (b.type === "image") {
     if (b.src) { const im = el("img", "vignette"); im.src = b.src; im.alt = ""; corps.appendChild(im); }
@@ -892,8 +891,7 @@ function carte(b, i) {
 function extraitBloc(b) {
   let t = "";
   if (b.type === "intertitre") t = b.texte;
-  else if (b.type === "texte" || b.type === "encadre") t = b.paras.length ? texteDe(b.paras[0]) : "";
-  else if (b.type === "liste") t = b.items.split("\n")[0] || "";
+  else if (b.type === "texte" || b.type === "encadre" || b.type === "liste") t = b.paras.length ? texteDe(b.paras[0]) : "";
   else if (b.type === "image") t = b.deco ? "(d\u00e9corative)" : (b.alt || (b.src ? "sans texte alternatif" : "aucune image"));
   t = t.trim();
   return t ? "\u2014 " + (t.length > 46 ? t.slice(0, 45) + "\u2026" : t) : "";
@@ -943,7 +941,7 @@ function deplacer(id, d) { const i = idx(id), j = i + d; if (j < 0 || j >= S.blo
 function dupliquer(id) { const i = idx(id), c = JSON.parse(JSON.stringify(S.blocs[i], sansCache)); c.id = uid(); S.blocs.splice(i + 1, 0, c); renderEditeur(c.id); majApercu(); }
 function supprimer(id) {
   const i = idx(id), b = S.blocs[i];
-  const vide = (b.type === "texte" || b.type === "encadre") ? !b.paras.length : b.type === "intertitre" ? !b.texte.trim() : b.type === "liste" ? !b.items.trim() : !b.src;
+  const vide = (b.type === "texte" || b.type === "encadre" || b.type === "liste") ? !b.paras.length : b.type === "intertitre" ? !b.texte.trim() : !b.src;
   if (!vide && !confirm("Supprimer ce bloc ?")) return;
   S.blocs.splice(i, 1); blocActif = null; renderEditeur(); majApercu(); toast("Bloc supprim\u00e9.");
 }
@@ -1007,7 +1005,7 @@ function chargerEtat(o) {
     }
     if (n.type === "texte" || n.type === "encadre") { n.paras = (Array.isArray(b.paras) ? b.paras : []).map(nettoyerHtml).filter(p => texteDe(p).trim()); if (n.type === "encadre") { n.style = ["jaune", "rouge", "gris"].includes(b.style) ? b.style : "jaune"; n.niveau = Math.max(0, Math.min(6, parseInt(b.niveau) || 0)); n.portee = b.portee === "tout" ? "tout" : "premier"; n.align = b.align === "centre" ? "centre" : "gauche"; } }
     if (n.type === "encadre") n.orn = lireOrn(b.orn);
-    if (n.type === "liste") { n.ordonnee = !!b.ordonnee; n.items = T(b.items); }
+    if (n.type === "liste") { n.ordonnee = !!b.ordonnee; n.paras = Array.isArray(b.paras) ? b.paras.map(nettoyerHtml).filter(p => texteDe(p).trim()) : T(b.items).split("\n").map(x => x.trim()).filter(Boolean).map(esc); }
     if (n.type === "image") {
       if (/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(b.src || "")) { n.src = b.src; n.mime = b.src.startsWith("data:image/png") ? "image/png" : "image/jpeg"; n.w = +b.w || 0; n.h = +b.h || 0; }
       if (n.src && /^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(b.svg || "")) n.svg = b.svg;
