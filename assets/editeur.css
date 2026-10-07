@@ -125,11 +125,17 @@ dialog.large{max-width:760px;width:92vw}
 .tr-corps li{margin-bottom:1mm}
 .tr-corps .enc{padding:4mm 5mm;margin:0 0 4mm;break-inside:avoid}
 .tr-corps .enc p:last-child{margin-bottom:0}
-.tract .tr-corps .enc.avec-orn{display:flex;align-items:center;gap:4mm}
+.tract .tr-corps .enc.avec-orn{display:flex;align-items:center;gap:3mm}
 .tract .tr-corps .enc.avec-orn.orn-haut{flex-direction:column;align-items:flex-start;gap:2.5mm}
 .tract .tr-corps .enc.avec-orn.centre.orn-haut{align-items:center}
 .tract .tr-corps .enc .enc-txt{flex:1;min-width:0}
-.tract .tr-corps .enc img.orn-enc{width:auto;flex:none;max-width:40%}
+.tract .tr-corps .enc img.orn-enc{width:auto;flex:none;max-width:40%;margin:var(--mv,0) var(--mh,0)}
+.tract .tr-corps .enc.avec-orn.habille{display:block}
+.tract .tr-corps .enc.avec-orn.habille::after{content:"";display:block;clear:both}
+.tract .tr-corps .enc.avec-orn.habille img.orn-enc{margin-bottom:calc(1mm + var(--mv,0px))}
+.tract .tr-corps .enc.avec-orn.habille.orn-gauche img.orn-enc{float:left;margin-left:var(--mh,0);margin-right:calc(3mm + var(--mh,0px))}
+.tract .tr-corps .enc.avec-orn.habille.orn-droite img.orn-enc{float:right;margin-right:var(--mh,0);margin-left:calc(3mm + var(--mh,0px))}
+.tract .tr-corps .enc.avec-orn.habille .enc-txt{display:block}
 .tract .tr-corps .enc img.orn-enc-petite{height:12mm}
 .tract .tr-corps .enc img.orn-enc-moyenne{height:20mm}
 .tract .tr-corps .enc img.orn-enc-grande{height:32mm}

@@ -297,10 +297,10 @@ function tractHtml() {
       const L = b.niveau | 0, tg = i => L && (b.portee === "tout" || i === 0) ? "h" + L : "p";
       const txt = b.paras.map((p, i) => `<${tg(i)}>${typo(p)}</${tg(i)}>`).join(""), o = b.orn, centre = b.align === "centre" ? " centre" : "";
       if (!o) return `<div class="enc enc-${b.style}${centre}">${txt}</div>`;
-      const ro = rotOrn(o), mx = margesRotX[b.id] || 0;
-      const rotAttr = ro ? ` rot" data-rot="${ro}" style="transform:rotate(${ro}deg);margin:${margesRot[b.id] || 0}px ${mx}px` : "";
+      const ro = rotOrn(o), mx = margesRotX[b.id] || 0, mv = margesRot[b.id] || 0, hab = o.dispo === "habillage" && o.cote !== "haut";
+      const rotAttr = ro ? ` rot" data-rot="${ro}" style="transform:rotate(${ro}deg);--mv:${mv}px;--mh:${mx}px` : "";
       const im = `<img class="orn-enc orn-enc-${o.taille}${rotAttr}" src="${o.svg || o.src}" alt="${o.decoratif ? "" : escA(o.alt)}">`;
-      return `<div class="enc enc-${b.style}${centre} avec-orn orn-${o.cote}">${o.cote === "droite" ? `<div class="enc-txt">${txt}</div>${im}` : `${im}<div class="enc-txt">${txt}</div>`}</div>`;
+      return `<div class="enc enc-${b.style}${centre} avec-orn orn-${o.cote}${hab ? " habille" : ""}">${o.cote === "droite" && !hab ? `<div class="enc-txt">${txt}</div>${im}` : `${im}<div class="enc-txt">${txt}</div>`}</div>`;
     }
     return "";
   };
@@ -738,12 +738,13 @@ function uiOrn(b, corps, enc) {                 // enc : vrai pour un encadre (p
   const tt = el("p", "", enc ? "Pictogramme dans l\u2019encadr\u00e9 (facultatif)" : "D\u00e9coration de l\u2019intertitre (facultative)"); tt.style.cssText = "font-weight:bold;margin:0 0 6px"; bloc.appendChild(tt);
   if (!b.orn) {
     bloc.append(bouton("Choisir dans la banque\u2026", (enc ? "Choisir un pictogramme dans la banque pour cet encadr\u00e9" : "Choisir une d\u00e9coration dans la banque pour cet intertitre"), () => ouvrirBanque({ orn: b.id })),
-      el("p", "aide", enc ? "Un pictogramme de la banque plac\u00e9 dans l\u2019encadr\u00e9, par exemple un porte-voix pour une annonce." : "Un pictogramme ou un num\u00e9ro plac\u00e9 \u00e0 gauche ou \u00e0 droite du titre."));
+      el("p", "aide", enc ? "Un pictogramme de la banque plac\u00e9 dans l\u2019encadr\u00e9, par exemple un porte-voix pour une annonce. Les marges blanches de l\u2019image sont retir\u00e9es automatiquement." : "Un pictogramme ou un num\u00e9ro plac\u00e9 \u00e0 gauche ou \u00e0 droite du titre."));
   } else {
     const o = b.orn, im = el("img", "vignette"); im.src = o.src; im.alt = ""; im.style.maxHeight = "60px"; bloc.appendChild(im);
     const sel = (id, lib, opts, val, f) => { const l = el("label", "", lib); l.htmlFor = id + b.id; const s2 = el("select"); s2.id = id + b.id; opts.forEach(([v, t]) => { const op = el("option", "", t); op.value = v; if (v === val) op.selected = true; s2.appendChild(op); }); s2.onchange = () => f(s2.value); bloc.append(l, s2); };
     if (enc) {
-      sel("oc", "Position", [["gauche", "\u00c0 gauche du texte"], ["droite", "\u00c0 droite du texte"], ["haut", "Au-dessus du texte"]], o.cote, v => { o.cote = v; changed(); });
+      sel("oc", "Position", [["gauche", "\u00c0 gauche du texte"], ["droite", "\u00c0 droite du texte"], ["haut", "Au-dessus du texte"]], o.cote, v => { o.cote = v; renderEditeur(b.id); majApercu(); });
+      if (o.cote !== "haut") sel("od", "Texte", [["cote", "\u00c0 c\u00f4t\u00e9 du pictogramme"], ["habillage", "Autour du pictogramme (le texte l\u2019entoure)"]], o.dispo || "cote", v => { o.dispo = v; changed(); });
       sel("ot", "Taille", [["petite", "Petite (12 mm de haut)"], ["moyenne", "Moyenne (20 mm)"], ["grande", "Grande (32 mm)"]], o.taille, v => { o.taille = v; changed(); });
     } else {
       sel("oc", "Position", [["gauche", "\u00c0 gauche du titre"], ["droite", "\u00c0 droite du titre"]], o.cote, v => { o.cote = v; changed(); });
@@ -989,7 +990,7 @@ function lireOrn(o) {
   return { banqueId: T(o.banqueId), alt: T(o.alt), decoratif: !!o.decoratif, cote: ["droite", "haut"].includes(o.cote) ? o.cote : "gauche",
     taille: ["petite", "moyenne", "grande"].includes(o.taille) ? o.taille : "moyenne", src: o.src,
     svg: /^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(o.svg || "") ? o.svg : "",
-    rot: rotOrn(o), mime: o.src.startsWith("data:image/png") ? "image/png" : "image/jpeg", w: +o.w || 1, h: +o.h || 1 };
+    rot: rotOrn(o), dispo: o.dispo === "habillage" ? "habillage" : "cote", mime: o.src.startsWith("data:image/png") ? "image/png" : "image/jpeg", w: +o.w || 1, h: +o.h || 1 };
 }
 function chargerEtat(o) {
   if (!o || !Array.isArray(o.blocs)) throw new Error("fichier invalide");
@@ -1152,12 +1153,47 @@ function svgVersPng(src, w, h) {
   });
 }
 let banqueCible = null;
+/** Retire les marges transparentes d'un pictogramme (image PNG ou SVG) : l'encadre n'affiche que le dessin, sans « vide » autour. */
+async function rognerOrn(o) {
+  const charger = src => new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ko; im.src = src; });
+  const W = 300, H = Math.max(1, Math.round(W * o.h / o.w));
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const cx = cv.getContext("2d", { willReadFrequently: true }); cx.drawImage(await charger(o.svg || o.src), 0, 0, W, H);
+  const d = cx.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 12) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0 || o.mime === "image/jpeg") return;                             // image vide ou sans transparence : rien a rogner
+  const p = 2; x0 = Math.max(0, x0 - p); y0 = Math.max(0, y0 - p); x1 = Math.min(W - 1, x1 + p); y1 = Math.min(H - 1, y1 + p);
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+  if (bw * bh > 0.97 * W * H) return;                                          // quasiment pas de marge
+  const fx0 = x0 / W, fy0 = y0 / H, fw = bw / W, fh = bh / H;
+  if (o.svg) {
+    const b64 = o.svg.split(",")[1], txt = new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+    const m = txt.match(/<svg\b[^>]*>/i); if (!m) return;
+    const racine = m[0], vb = (racine.match(/viewBox\s*=\s*"([^"]+)"/i) || [])[1];
+    let [vx, vy, vw, vh] = vb ? vb.trim().split(/[\s,]+/).map(Number) : [0, 0, parseFloat((racine.match(/\bwidth\s*=\s*"([\d.]+)/i) || [])[1]) || o.w, parseFloat((racine.match(/\bheight\s*=\s*"([\d.]+)/i) || [])[1]) || o.h];
+    if (![vx, vy, vw, vh].every(Number.isFinite) || vw <= 0 || vh <= 0) return;
+    const nvx = vx + fx0 * vw, nvy = vy + fy0 * vh, nvw = fw * vw, nvh = fh * vh, f = n => Math.round(n * 1000) / 1000;
+    let nr = racine.replace(/\sviewBox\s*=\s*"[^"]*"/i, "").replace(/\swidth\s*=\s*"[^"]*"/i, "").replace(/\sheight\s*=\s*"[^"]*"/i, "");
+    nr = nr.replace(/<svg\b/i, `<svg viewBox="${f(nvx)} ${f(nvy)} ${f(nvw)} ${f(nvh)}" width="${f(nvw)}" height="${f(nvh)}"`);
+    const nouveau = txt.replace(racine, nr);
+    o.svg = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(nouveau)));
+    const W2 = 600, H2 = Math.max(1, Math.round(W2 * nvh / nvw)), c2 = document.createElement("canvas"); c2.width = W2; c2.height = H2;
+    c2.getContext("2d").drawImage(await charger(o.svg), 0, 0, W2, H2);
+    o.src = c2.toDataURL("image/png"); o.mime = "image/png"; o.w = W2; o.h = H2;
+  } else {
+    const im = await charger(o.src), sx = fx0 * im.naturalWidth, sy = fy0 * im.naturalHeight, sw = fw * im.naturalWidth, sh = fh * im.naturalHeight;
+    const c2 = document.createElement("canvas"); c2.width = Math.max(1, Math.round(sw)); c2.height = Math.max(1, Math.round(sh));
+    c2.getContext("2d").drawImage(im, sx, sy, sw, sh, 0, 0, c2.width, c2.height);
+    o.src = c2.toDataURL("image/png"); o.mime = "image/png"; o.w = c2.width; o.h = c2.height;
+  }
+}
 async function appliquerOrn(e) {
   const b = S.blocs.find(x => x.id === banqueCible.orn); if (!b) return;
-  const o = { banqueId: e.id, alt: e.alt || "", decoratif: !!e.deco, cote: (b.orn && b.orn.cote) || "gauche", taille: (b.orn && b.orn.taille) || "moyenne", rot: (b.orn && b.orn.rot) || 0, src: "", svg: "", mime: "", w: 0, h: 0 };
+  const o = { banqueId: e.id, alt: e.alt || "", decoratif: !!e.deco, cote: (b.orn && b.orn.cote) || "gauche", taille: (b.orn && b.orn.taille) || "moyenne", rot: (b.orn && b.orn.rot) || 0, dispo: (b.orn && b.orn.dispo) || "cote", src: "", svg: "", mime: "", w: 0, h: 0 };
   try {
     if (e.src.startsWith("data:image/svg+xml")) { const W = 300, H = Math.max(1, Math.round(W * e.h / e.w)); o.svg = e.src; o.src = await svgVersPng(e.src, W, H); o.mime = "image/png"; o.w = W; o.h = H; }
     else { o.src = e.src; o.mime = e.src.startsWith("data:image/png") ? "image/png" : "image/jpeg"; o.w = e.w; o.h = e.h; }
+    if (b.type === "encadre") await rognerOrn(o);
   } catch (er) { toast("Cet \u00e9l\u00e9ment n\u2019a pas pu \u00eatre converti pour le mail."); return; }
   b.orn = o; banqueCible = null; $("#dlgBanque").close(); renderEditeur(b.id); majApercu();
   toast(o.decoratif ? "D\u00e9coration ajout\u00e9e (d\u00e9corative)." : "D\u00e9coration ajout\u00e9e : v\u00e9rifiez son texte alternatif.");
