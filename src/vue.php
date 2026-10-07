@@ -32,7 +32,7 @@ function page_debut(string $titre, array $u, string $actif = ''): void {
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store');
     $menu = $u['role'] === 'admin'
-        ? ['admin.php' => ['comptes', 'Comptes'], 'aide.php' => ['aide', 'Aide'], 'motdepasse.php' => ['mdp', 'Mot de passe']]
+        ? ['admin.php' => ['comptes', 'Comptes'], 'admin_pdf.php' => ['moteurpdf', 'Moteur PDF'], 'aide.php' => ['aide', 'Aide'], 'motdepasse.php' => ['mdp', 'Mot de passe']]
         : ['app.php' => ['editeur', '&Eacute;diteur'], 'chartes.php' => ['chartes', 'Chartes'], 'banque.php' => ['banque', 'Banque d\'&eacute;l&eacute;ments'], 'aide.php' => ['aide', 'Aide'], 'motdepasse.php' => ['mdp', 'Mot de passe']];
     echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<title>' . $titre . ' &ndash; Tracteur</title>' . liens_marque()

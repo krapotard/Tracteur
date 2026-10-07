@@ -24,6 +24,7 @@ function config_pdf(): array {
         'max_html' => 6000000,        // octets
         'simultanes' => 2,
         'par_minute' => 8,            // PDF par compte et par minute
+        'options_chrome' => [],       // options supplementaires de Chrome (voir la page Moteur PDF de l'administration)
     ];
     $local = RACINE . '/data/config.local.php';
     if (is_file($local)) $c = array_replace($c, (array)(require $local));
@@ -161,7 +162,11 @@ function arreter_chrome($processus, int $pid, string $job): void {
     @proc_terminate($processus, 9);
 }
 
-function generer_pdf(string $htmlComplet): string {
+/**
+ * $extra : options de Chrome ajoutees pour cet appel (essais de vitesse) ; $balise : false pour un PDF non balise (comparaison seulement) ;
+ * $mesures recoit le temps jusqu'au PDF et le temps total.
+ */
+function generer_pdf(string $htmlComplet, array $extra = [], bool $balise = true, ?array &$mesures = null): string {
     $c = config_pdf();
     if (!$c['chrome']) throw new ErreurPdf('Aucun navigateur n\'est configure pour produire le PDF.', 503);
     $verrou = prendre_place($c);
@@ -176,10 +181,12 @@ function generer_pdf(string $htmlComplet): string {
         $headlessShell = str_contains(basename($c['chrome']), 'headless-shell');
         $args = [$c['chrome']];
         if (!$headlessShell) $args[] = '--headless=new';
-        array_push($args, '--disable-gpu', '--disable-dev-shm-usage', '--no-pdf-header-footer', '--export-tagged-pdf', '--generate-pdf-document-outline',
+        if ($balise) array_push($args, '--export-tagged-pdf', '--generate-pdf-document-outline');
+        array_push($args, '--disable-gpu', '--disable-dev-shm-usage', '--no-pdf-header-footer',
             '--disable-extensions', '--disable-background-networking', '--disable-sync', '--no-first-run', '--mute-audio',
             '--user-data-dir=' . $job . '/profil', '--print-to-pdf=' . $sortie);
         if (DIRECTORY_SEPARATOR === '/') $args[] = '--no-sandbox';
+        foreach (array_merge((array)($c['options_chrome'] ?? []), $extra) as $o) if (is_string($o) && preg_match('/^--[a-z0-9-]+(=[A-Za-z0-9,._:-]*)?$/i', $o)) $args[] = $o;      // options verifiees : jamais de saisie libre
         $args[] = 'file://' . (DIRECTORY_SEPARATOR === '\\' ? '/' : '') . str_replace('\\', '/', $entree);
 
         $env = getenv() ?: [];
@@ -208,6 +215,7 @@ function generer_pdf(string $htmlComplet): string {
         }
         proc_close($p);
         $total = microtime(true) - $debut;
+        $mesures = ['apparu' => $apparu, 'total' => $total, 'coupe' => $coupe];
         journal_temps(strlen($htmlComplet), $apparu, $total, $coupe);
 
         if (!is_file($sortie) || filesize($sortie) < 200) {

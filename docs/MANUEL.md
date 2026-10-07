@@ -166,6 +166,8 @@ Réservé au compte `admin`. La page **Comptes** permet de :
 
 Chaque compte ne voit que ses propres chartes et sa propre banque.
 
+**Moteur PDF.** La page « Moteur PDF » (compte `admin`) mesure la vitesse de création des PDF sur le serveur : chaque essai produit un PDF d'essai et affiche le temps jusqu'à l'écriture du PDF et le temps total, avec la charge du serveur. Elle compare quelques réglages de Chrome (page vide pour mesurer le démarrage seul, réglage actuel, moins de processus…) et liste les derniers exports réels. Un réglage nettement plus rapide s'active avec la ligne `'options_chrome' => ['--option']` dans `data/config.local.php`. Un essai peut durer jusqu'à une minute sur un hébergement mutualisé.
+
 ## Questions fréquentes
 
 **Le PDF met longtemps à se créer.** Quelques secondes à une quinzaine, selon le serveur. Attendez la fin du bandeau d'attente.
