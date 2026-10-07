@@ -101,6 +101,14 @@ function document_pdf(string $titre, string $fragment, array $couleurs, array $f
         . $fragment . '</body></html>';
 }
 
+/** Une ligne par PDF dans data/logs/pdf_temps.log : taille du HTML, temps jusqu'au PDF, temps total, arret anticipe de Chrome (diagnostic de lenteur). */
+function journal_temps(int $octetsHtml, ?float $apparu, float $total, bool $coupe): void {
+    $f = RACINE . '/data/logs/pdf_temps.log';
+    @mkdir(dirname($f), 0700, true);
+    if (is_file($f) && filesize($f) > 200000) @unlink($f);
+    @file_put_contents($f, sprintf("%s html=%dKo pdf_apres=%s total=%.1fs arret_anticipe=%s\n", date('c'), $octetsHtml / 1024, $apparu === null ? '-' : sprintf('%.1fs', $apparu), $total, $coupe ? 'oui' : 'non'), FILE_APPEND | LOCK_EX);
+}
+
 // ---------- Limites : simultanes et debit ----------
 function prendre_place(array $c): mixed {
     @mkdir($c['tmp'], 0700, true);
@@ -133,6 +141,26 @@ function supprimer_dossier(string $d): void {
 }
 
 // ---------- Generation ----------
+/** Le fichier est-il un PDF termine (marque de fin presente) ? */
+function pdf_complet(string $fichier): bool {
+    $t = @filesize($fichier);
+    if (!$t || $t < 200) return false;
+    $f = @fopen($fichier, 'rb'); if (!$f) return false;
+    fseek($f, max(0, $t - 64)); $fin = (string)fread($f, 64); fclose($f);
+    return strpos($fin, '%%EOF') !== false;
+}
+
+/** Arrete Chrome et ses processus fils sans attendre sa fermeture « propre » (plusieurs secondes) une fois le PDF ecrit. */
+function arreter_chrome($processus, int $pid, string $job): void {
+    $exec = function_exists('exec') && !in_array('exec', array_map('trim', explode(',', (string)ini_get('disable_functions'))), true);
+    if ($exec) {
+        $sortie = [];
+        if (DIRECTORY_SEPARATOR === '\\') @exec('taskkill /F /T /PID ' . $pid . ' >NUL 2>&1', $sortie);
+        else @exec('pkill -9 -f ' . escapeshellarg('[u]ser-data-dir=' . preg_quote($job, '/')) . ' >/dev/null 2>&1', $sortie);      // le crochet evite que pkill se reconnaisse lui-meme
+    }
+    @proc_terminate($processus, 9);
+}
+
 function generer_pdf(string $htmlComplet): string {
     $c = config_pdf();
     if (!$c['chrome']) throw new ErreurPdf('Aucun navigateur n\'est configure pour produire le PDF.', 503);
@@ -163,14 +191,24 @@ function generer_pdf(string $htmlComplet): string {
         $journal = $job . '/chrome.log';
         $p = proc_open($args, [0 => ['file', $nul, 'r'], 1 => ['file', $nul, 'w'], 2 => ['file', $journal, 'w']], $pipes, $job, $env);
         if (!is_resource($p)) throw new ErreurPdf('Impossible de lancer le navigateur.');
-        $debut = time();
+        $debut = microtime(true); $taille = -1; $stable = 0; $apparu = null; $coupe = false;
         while (true) {
             $s = proc_get_status($p);
             if (!$s['running']) break;
-            if (time() - $debut > $c['timeout']) { proc_terminate($p, 9); proc_close($p); throw new ErreurPdf('Delai depasse pour la generation du PDF.', 504); }
-            usleep(100000);
+            $ecoule = microtime(true) - $debut;
+            if ($ecoule > $c['timeout']) { arreter_chrome($p, (int)$s['pid'], $job); proc_close($p); throw new ErreurPdf('Delai depasse pour la generation du PDF.', 504); }
+            // Le PDF est ecrit bien avant que Chrome ne se ferme : des qu'il est complet et ne bouge plus, on n'attend pas la fermeture.
+            clearstatcache(true, $sortie);
+            if (is_file($sortie)) {
+                $apparu ??= $ecoule; $t = (int)filesize($sortie);
+                if ($t > 200 && $t === $taille) { if (++$stable >= 3 && pdf_complet($sortie)) { $coupe = true; arreter_chrome($p, (int)$s['pid'], $job); break; } }
+                else { $stable = 0; $taille = $t; }
+            }
+            usleep(60000);
         }
         proc_close($p);
+        $total = microtime(true) - $debut;
+        journal_temps(strlen($htmlComplet), $apparu, $total, $coupe);
 
         if (!is_file($sortie) || filesize($sortie) < 200) {
             @mkdir(RACINE . '/data/logs', 0700, true);
@@ -180,6 +218,7 @@ function generer_pdf(string $htmlComplet): string {
         return (string)file_get_contents($sortie);
     } finally {
         supprimer_dossier($job);
+        if (is_dir($job)) { usleep(500000); supprimer_dossier($job); }      // Chrome arrete de force peut encore tenir un fichier quelques instants
         flock($verrou, LOCK_UN); fclose($verrou);
     }
 }
