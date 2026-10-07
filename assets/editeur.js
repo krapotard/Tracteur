@@ -619,19 +619,35 @@ function mesurerPasse() {
   });
   m.innerHTML = "";
 }
+/**
+ * Apercu paginé : le tract est affiche page par page, comme a l'impression. Le contenu est place dans une bande de la hauteur d'une page
+ * dont les colonnes se prolongent vers la droite : le navigateur fragmente alors le tract comme le fait l'impression (colonnes 1 et 2 de la
+ * page 1, puis colonnes 1 et 2 de la page 2...). Chaque feuille ne montre que sa « colonne » de la bande.
+ */
+function apercuPagine(html) {
+  const cont = $("#apTract"), pageW = 210 / 25.4 * 96, pageH = 297 / 25.4 * 96, etiq = 22, ecart = 14;
+  cont.innerHTML = "";
+  const f1 = el("div", "pg-feuille"), b1 = el("div", "pg-bande");
+  b1.innerHTML = html; f1.appendChild(b1); cont.appendChild(f1);
+  const pages = Math.max(1, Math.min(12, Math.ceil((b1.scrollWidth - 2) / pageW)));
+  for (let p = 2; p <= pages; p++) {
+    const f = f1.cloneNode(true); f.setAttribute("aria-hidden", "true"); f.setAttribute("inert", "");        // une seule copie lue par les lecteurs d'ecran
+    f.firstChild.style.transform = `translateX(${-(p - 1) * 210}mm)`; cont.appendChild(f);
+  }
+  [...cont.children].forEach((f, i) => { const e = el("div", "pg-etiq", `Page ${i + 1} sur ${pages}`); e.setAttribute("aria-hidden", "true"); cont.insertBefore(e, f); });
+  return { pages, hauteur: pages * (pageH + etiq + ecart) - ecart };
+}
 function majApercu() {
   majResumes();
   mesurer();
-  $("#apTract").innerHTML = tractHtml();
-  const t = $("#apTract .tract"), wrap = $("#apWrap"), sc = $("#apScale");
-  const dispo = $("#pTract").clientWidth - 28, w = t.offsetWidth || 794;
+  const wrap = $("#apWrap"), sc = $("#apScale");
+  const { pages, hauteur } = apercuPagine(tractHtml());
+  pagesTract = pages;                                          // nombre de pages reel (celui de l'impression), plus fiable que l'estimation
+  const w = 210 / 25.4 * 96, dispo = $("#pTract").clientWidth - 28;
   const k = Math.min(1, Math.max(0.3, dispo / w));
   sc.style.transform = `scale(${k})`;
   wrap.style.width = Math.round(w * k) + "px";
-  wrap.style.height = Math.round(t.offsetHeight * k) + "px";
-  const pagePx = 297 / 25.4 * 96;
-  $$(".coupure", wrap).forEach(x => x.remove());
-  for (let p = 1; p < pagesTract; p++) { const c = el("div", "coupure"); c.style.top = Math.round(p * pagePx * k) + "px"; c.appendChild(el("span", "", "Fin de la page " + p)); wrap.appendChild(c); }
+  wrap.style.height = Math.round(hauteur * k) + "px";
   if (!$("#pMail").hidden) rafraichirMail();
   const pb = verifier(), ne = pb.filter(p => p.niv === "erreur").length, na = pb.length - ne;
   const bd = $("#badge"); bd.textContent = pb.length; bd.className = "badge" + (ne ? " err" : na ? " warn" : "");

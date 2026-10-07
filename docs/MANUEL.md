@@ -83,7 +83,7 @@ Un tract est une suite de blocs. Sous la liste, « Ajouter un bloc » propose : 
 
 ### Les trois onglets de droite
 
-- **Tract (PDF)** : l'aperçu du tract tel qu'il sera imprimé.
+- **Tract (PDF)** : l'aperçu du tract **page par page**, tel qu'il sera imprimé, avec le nombre de pages. En modèle « 2 colonnes », le texte remplit les colonnes 1 et 2 de la page 1, puis se poursuit dans les colonnes 1 et 2 de la page 2.
 - **Mail** : l'aperçu du mail.
 - **Accessibilité** : la liste des points à corriger ou à surveiller (titre manquant, image sans texte alternatif, lien peu clair, texte trop long, risque de page blanche…). Le nombre à côté du nom de l'onglet indique le nombre de problèmes. Un tract sans erreur reçoit la mention PDF/UA dans les métadonnées du PDF.
 
