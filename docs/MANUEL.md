@@ -89,7 +89,7 @@ Un tract est une suite de blocs. Sous la liste, « Ajouter un bloc » propose : 
 
 ## Produire le PDF et le mail
 
-Cliquez sur **PDF seul**, **Mail seul (.eml)** ou **Exporter PDF + mail**. La création du PDF peut prendre **quelques secondes** : un bandeau jaune avec une roue qui tourne s'affiche sous les boutons, et les boutons d'export sont grisés jusqu'à la fin. Ne fermez pas la page pendant ce temps.
+Cliquez sur **PDF seul**, **Mail seul (.eml)** ou **Exporter PDF + mail**. La création du PDF peut prendre **quelques secondes** : un bandeau jaune avec une roue qui tourne s'affiche sous les boutons, et les boutons d'export sont grisés jusqu'à la fin. Ne fermez pas la page pendant ce temps. Sur certains hébergements, le **premier PDF après une longue inactivité** peut être nettement plus lent (jusqu'à une minute) : l'éditeur prépare le moteur PDF dès que vous l'ouvrez, pendant que vous rédigez, pour que l'export soit rapide.
 
 Dans le mail, avec l'en-tête simple (logo et nom de l'organisation), **le titre du tract s'affiche à droite du logo, à la place du nom** ; il n'est pas répété sous l'en-tête. Avec un en-tête en image, le titre reste sous l'image.
 

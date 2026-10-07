@@ -71,6 +71,8 @@ page_debut('Moteur PDF', $u, 'moteurpdf');
 <p>Navigateur utilis&eacute; : <code><?= h((string)($cfg['chrome'] ?: 'aucun')) ?></code>
 <?php if (!empty($cfg['options_chrome'])): ?> &middot; options suppl&eacute;mentaires actuelles : <code><?= h(implode(' ', (array)$cfg['options_chrome'])) ?></code><?php endif; ?></p>
 
+<p class="aide"><strong>Le premier PDF apr&egrave;s une longue inactivit&eacute; peut &ecirc;tre tr&egrave;s lent</strong> (d&eacute;marrage &laquo;&nbsp;&agrave; froid&nbsp;&raquo; de Chrome sur un h&eacute;bergement mutualis&eacute;), puis les suivants sont presque instantan&eacute;s. L'&eacute;diteur pr&eacute;chauffe donc Chrome d&egrave;s son ouverture. Pour comparer des r&eacute;glages, <strong>refaites chaque essai deux fois</strong> : seul le second est r&eacute;v&eacute;lateur.</p>
+
 <h2>Lancer un essai</h2>
 <form method="post" action="admin_pdf.php" id="formEssai">
   <?= champ_csrf() ?>

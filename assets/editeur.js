@@ -1246,6 +1246,8 @@ $("#bNouveau").onclick = () => { if (!confirm("Commencer un nouveau tract ? Le c
 $("#bOuvrir").onclick = () => $("#fProjet").click();
 $("#fProjet").onchange = e => { const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { try { chargerEtat(JSON.parse(fr.result)); toast("Projet ouvert."); } catch (er) { toast("Ce fichier n\u2019est pas un projet valide."); } }; fr.readAsText(f); e.target.value = ""; };
 $("#bSauver").onclick = () => telecharger(new Blob([JSON.stringify(S, sansCache)], { type: "application/json" }), nomFichier(".tract.json"));
+/* Prechauffage du moteur PDF du serveur (le premier lancement apres une longue inactivite peut durer pres d'une minute) */
+setTimeout(() => { try { fetch("api/pdf.php?prechauffage=1", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": window.__CSRF__ } }).catch(() => {}); } catch (e) {} }, 2000);
 $("#bPdf").onclick = () => exporter("pdf");
 $("#bEml").onclick = () => exporter("eml");
 $("#bTout").onclick = () => exporter("tout");
