@@ -157,7 +157,7 @@ function exemple() {
   const t = (...p) => Object.assign(nouveauBloc("texte"), { paras: p });
   const h = x => Object.assign(nouveauBloc("intertitre"), { texte: x });
   return {
-    version: 1, modele: "greve", align: "justifie", barre: BARRE_DEFAUT, titreMaj: false, police: POLICE_DEFAUT, policeTitre: "", objet: "",
+    version: 1, modele: "greve", align: "justifie", interligne: "", barre: BARRE_DEFAUT, titreMaj: false, police: POLICE_DEFAUT, policeTitre: "", objet: "",
     titre: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
     blocs: [
       h("Sed ut perspiciatis unde omnis"),
@@ -173,7 +173,7 @@ function exemple() {
     ]
   };
 }
-const tractVide = () => ({ version: 1, modele: "greve", align: "justifie", barre: BARRE_DEFAUT, titreMaj: false, police: POLICE_DEFAUT, policeTitre: "", objet: "", titre: "", blocs: [nouveauBloc("texte")] });
+const tractVide = () => ({ version: 1, modele: "greve", align: "justifie", interligne: "", barre: BARRE_DEFAUT, titreMaj: false, police: POLICE_DEFAUT, policeTitre: "", objet: "", titre: "", blocs: [nouveauBloc("texte")] });
 const departTract = () => CHARTE.depart === "exemple" ? exemple() : tractVide();
 let S = departTract();
 let blocActif = null;
@@ -309,7 +309,7 @@ function tractHtml() {
     return `<div class="bl${b.pleine ? " pleine" : ""}" data-b="${b.id}"${b.police && POLICES[b.police] ? ` style="font-family:${pile(b.police)}"` : ""}>${h}</div>`;
   }).join("\n");
   const coords = C.adresses.map(a => `<p class="coord">${a.map(esc).join("<br>")}</p>`).join("");
-  return `<div class="tract t-${S.modele} al-${S.align === "gauche" ? "gauche" : "justifie"}${S.barre ? (CHARTE.intertitres === "souligne" ? " souligne-on" : " barre-on") : ""}${CHARTE.logoCote === "gauche" ? " logo-gauche" : ""}${CHARTE.enteteStyle === "filet" ? " tete-filet" : ""}${CHARTE.encadres === "arrondi" ? " enc-ronds" : ""}${CHARTE.enteteImage || CHARTE.enteteCompose ? " avec-masthead" : ""}${CHARTE.logoSvg || LOGO ? "" : " sans-logo"}${titreEnTete ? " titre-en-tete" : ""}" style="font-family:${pile(S.police)};--mmin:${mainMinPx}px;--esp-tete:${CHARTE.espaceEntete ?? 6}mm">
+  return `<div class="tract t-${S.modele} al-${S.align === "gauche" ? "gauche" : "justifie"}${S.barre ? (CHARTE.intertitres === "souligne" ? " souligne-on" : " barre-on") : ""}${CHARTE.logoCote === "gauche" ? " logo-gauche" : ""}${CHARTE.enteteStyle === "filet" ? " tete-filet" : ""}${CHARTE.encadres === "arrondi" ? " enc-ronds" : ""}${CHARTE.enteteImage || CHARTE.enteteCompose ? " avec-masthead" : ""}${CHARTE.logoSvg || LOGO ? "" : " sans-logo"}${titreEnTete ? " titre-en-tete" : ""}" style="font-family:${pile(S.police)};--mmin:${mainMinPx}px;--esp-tete:${CHARTE.espaceEntete ?? 6}mm${S.interligne ? `;--il:${S.interligne};--ilt:${Math.min(+S.interligne, 1.2)}` : ""}">
 ${CHARTE.enteteCompose ? composeHtml(CHARTE.enteteCompose, "header") : CHARTE.enteteImage ? `<header class="tr-masthead">${imgDecor(CHARTE.enteteImage)}</header>` : `<header class="tr-head${CHARTE.enteteFond ? " avec-fond" : ""}">${imgDecor(CHARTE.enteteFond, "fond")}<div><p class="org">${esc(C.orgNomMaj)}</p>${C.siteUrl ? `<p><a href="${C.siteUrl}">${esc(C.siteTexte)}</a></p>` : ""}${C.fbUrl ? `<p><a href="${C.fbUrl}">${esc(C.fbTexte)}</a></p>` : ""}</div>${coords}${CHARTE.logoSvg || LOGO ? `<img class="tr-logo" src="${CHARTE.logoSvg || LOGO}" alt="">` : ""}</header>`}
 <main class="tr-main">${titreEnTete ? "" : `<div class="tr-title"><h1${titreSimple() ? "" : ' class="vide"'}${S.policeTitre && POLICES[S.policeTitre] ? ` style="font-family:${pile(S.policeTitre)}"` : ""}>${titreSimple() ? titreHtml(titreLignes()) : "Titre du tract"}</h1></div>`}<div class="tr-corps">${accHtml(corps)}</div></main>
 ${CHARTE.piedCompose ? piedComposeHtml() : `<footer style="break-inside:avoid;break-before:avoid">${CHARTE.piedImage ? `<div class="tr-pied-img"><div style="width:${Math.min(186, Math.round(piedMm * 10 * CHARTE.piedImage.w / CHARTE.piedImage.h) / 10)}mm">${imgDecor(CHARTE.piedImage)}</div></div>` : ""}<div class="tr-foot${CHARTE.piedFond ? " avec-fond" + (CHARTE.piedTexte === "clair" ? " clair" : "") : ""}">${imgDecor(CHARTE.piedFond, "fond")}${C.appel ? `<p class="appel">${esc(C.appel).replace(", ", ",<br>")}</p>` : ""}<div>${C.siteUrl ? `<p>${CHARTE.iconesPied ? icoPied("globe") : ""}<a href="${C.siteUrl}">${esc(C.siteTexte)}</a></p>` : ""}${C.mail ? `<p>${CHARTE.iconesPied ? icoPied("mail") : ""}<a href="mailto:${C.mail}">${esc(C.mail)}</a></p>` : ""}</div></div><div class="tr-bar"></div></footer>`}
@@ -327,9 +327,10 @@ function inlineMail(h, couleurLien, ff) {
   return typo(accHtml(h)).replace(/<a href="([^"]*)">/g, `<a href="$1" style="${ff}color:${couleurLien};text-decoration:underline">`);
 }
 function mailHtml(apercu) {
+  const IL = S.interligne || "1.5";                         // interligne du texte courant (reglage de l'editeur)
   const C = CONFIG, images = []; let n = 0;
   const bt = CONFIG.texte;
-  const pSr = `font-size:12pt;line-height:1.5;margin:0 0 12px 0;color:${bt}`;
+  const pSr = `font-size:12pt;line-height:${IL};margin:0 0 12px 0;color:${bt}`;
   const blocs = S.blocs.map(b => {
     const Fb = ffam(policeBloc(b));
     if (b.type === "intertitre") {
@@ -349,7 +350,7 @@ function mailHtml(apercu) {
     if (b.type === "liste") {
       const it = b.paras; if (!it.length) return "";
       const tag = b.ordonnee ? "ol" : "ul";
-      return `<${tag} style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 12px 24px;padding:0;color:${bt}">` + it.map(x => `<li style="margin-bottom:6px">${inlineMail(x, C.lien, Fb)}</li>`).join("\n") + `</${tag}>`;
+      return `<${tag} style="${Fb}font-size:12pt;line-height:${IL};margin:0 0 12px 24px;padding:0;color:${bt}">` + it.map(x => `<li style="margin-bottom:6px">${inlineMail(x, C.lien, Fb)}</li>`).join("\n") + `</${tag}>`;
     }
     if (b.type === "image") {
       if (!b.src) return "";
@@ -366,7 +367,7 @@ function mailHtml(apercu) {
         const pic = `<img src="${apercu ? srcImg : "cid:" + cid}" alt="${alt}" width="${w}" height="${h}" style="width:${w}px;max-width:100%;height:auto;border:0">` +
           (b.credit.trim() ? `<p style="${Fb}font-size:9pt;line-height:1.4;margin:4px 0 0 0;color:#595959">${typoTxt(b.credit.trim())}</p>` : "");
         const cI = `<td valign="top" width="${w + 16}" style="width:${w + 16}px;padding:0 ${b.cote === "gauche" ? 16 : 0}px 12px ${b.cote === "droite" ? 16 : 0}px">${pic}</td>`;
-        const cT = `<td valign="top" style="padding:0 0 12px 0">` + b.paras.map((p, i) => `<p style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 ${i === b.paras.length - 1 ? 0 : 12}px 0;color:${bt}">${inlineMail(p, C.lien, Fb)}</p>`).join("\n") + `</td>`;
+        const cT = `<td valign="top" style="padding:0 0 12px 0">` + b.paras.map((p, i) => `<p style="${Fb}font-size:12pt;line-height:${IL};margin:0 0 ${i === b.paras.length - 1 ? 0 : 12}px 0;color:${bt}">${inlineMail(p, C.lien, Fb)}</p>`).join("\n") + `</td>`;
         return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${b.cote === "gauche" ? cI + cT : cT + cI}</tr></table>`;
       }
       return `<p style="margin:0 0 12px 0"><img src="${apercu ? srcImg : "cid:" + cid}" alt="${alt}" width="${w}" height="${h}" style="width:${w}px;max-width:100%;height:auto;border:0"></p>` +
@@ -378,7 +379,7 @@ function mailHtml(apercu) {
       const L = b.niveau | 0, al = b.align === "centre" ? "center" : "left", pt = PTN, o = b.orn;
       const txt = b.paras.map((p, i) => { const mg = i === b.paras.length - 1 ? 0 : 8, hd = L && (b.portee === "tout" || i === 0);
         return hd ? `<h${L} style="${Fb}font-size:${pt[L]}pt;line-height:1.25;font-weight:bold;margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</h${L}>`
-                  : `<p style="${Fb}font-size:12pt;line-height:1.5;margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</p>`; }).join("\n");
+                  : `<p style="${Fb}font-size:12pt;line-height:${IL};margin:0 0 ${mg}px 0;color:${st[1]};text-align:${al}">${inlineMail(p, st[2], Fb)}</p>`; }).join("\n");
       let dedans = txt;
       if (o) {
         n++; const cid = `img${n}@tract.local`, ext = o.mime === "image/png" ? "png" : "jpg";
@@ -391,11 +392,11 @@ function mailHtml(apercu) {
         else {
           const droite = o.cote === "droite";
           const cI = `<td valign="middle" style="padding:0 ${droite ? 0 : 14}px 0 ${droite ? 14 : 0}px">${im}</td>`;
-          const cT = `<td valign="middle" style="${Fb}font-size:12pt;line-height:1.5;color:${st[1]};text-align:${al}">${txt}</td>`;
+          const cT = `<td valign="middle" style="${Fb}font-size:12pt;line-height:${IL};color:${st[1]};text-align:${al}">${txt}</td>`;
           dedans = `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${droite ? cT + cI : cI + cT}</tr></table>`;
         }
       }
-      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 12px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${al}" style="${Fb}background:${st[0]};padding:14px 16px;font-size:12pt;line-height:1.5;color:${st[1]};text-align:${al}">` + dedans + `</td></tr></table></td></tr></table>`;
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 12px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${al}" style="${Fb}background:${st[0]};padding:14px 16px;font-size:12pt;line-height:${IL};color:${st[1]};text-align:${al}">` + dedans + `</td></tr></table></td></tr></table>`;
     }
     return "";
   }).filter(Boolean).join("\n");
@@ -414,7 +415,7 @@ function mailHtml(apercu) {
 ${CHARTE.enteteImage && CHARTE.enteteImage.png ? `<tr><td lang="fr" style="padding:0;line-height:0;font-size:0">${imgMail(CHARTE.enteteImage, "entete@tract.local", "entete.png")}</td></tr>` : `<tr><td lang="fr" style="${Fd}${CHARTE.enteteStyle === "filet" ? `border-bottom:4px solid ${C.rouge};` : `background:${C.rouge};`}padding:12px 16px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
 ${LOGO ? `<td style="padding-right:14px"><img src="${logoSrc}" alt="" width="64" height="${Math.round(64 * (CHARTE.logoRatio || 1.0469))}" style="width:64px;height:auto;border:0"></td>` : ""}
 <td style="${Fd}font-size:16pt;line-height:1.3;font-weight:bold;color:${coulEnt}">${titreEnEntete ? `<h1 style="${Ft}font-size:18pt;line-height:1.25;font-weight:bold;margin:0;color:${coulEnt}">${titreMail}</h1>` : esc(C.orgNom)}</td></tr></table></td></tr>`}
-<tr><td lang="fr" style="padding:16px;${Fd}font-size:12pt;line-height:1.5;color:${bt}">
+<tr><td lang="fr" style="padding:16px;${Fd}font-size:12pt;line-height:${IL};color:${bt}">
 ${titreEnEntete ? "" : `<h1 style="${Ft}font-size:20pt;line-height:1.25;margin:0 0 12px 0;color:${bt}">${titreMail}</h1>`}
 ${blocs}
 </td></tr>
@@ -566,6 +567,7 @@ function verifier() {
     const m = manque(policeBloc(b), t); if (m.length) add("avert", `Bloc ${i + 1} : \u00ab ${m.join(" ")} \u00bb est absent de la police choisie et s\u2019affichera dans une autre police.`, b.id);
   });
   alertesGeo.forEach(a => add("avert", a.msg, a.id));
+  if (S.interligne && +S.interligne < 1.25) add("avert", `L\u2019interligne choisi (${S.interligne.replace(".", ",")}) est serr\u00e9 : le texte est moins confortable \u00e0 lire, surtout pour les personnes dyslexiques ou malvoyantes. 1,5 est la valeur conseill\u00e9e.`, null);
   if (titreDebord) add("avert", "Le titre est trop long pour la zone pr\u00e9vue dans l\u2019en-t\u00eate, m\u00eame r\u00e9duit : raccourcissez-le.", null);
   else if (titreRatio < 0.8) add("avert", "Le titre a \u00e9t\u00e9 r\u00e9duit automatiquement pour tenir dans l\u2019en-t\u00eate. Un titre plus court sera plus lisible.", null);
   if (risquePageBlanche) add("avert", "Le texte se termine tout pr\u00e8s du bas de la derni\u00e8re page : le PDF risque de contenir une page blanche. Raccourcissez ou allongez de quelques lignes, puis v\u00e9rifiez le PDF.", null);
@@ -902,7 +904,7 @@ function majResumes() {
   const ch = $("#choixCharte"), t = titreSimple();
   set("etatCharte", `${ch && ch.selectedOptions[0] ? ch.selectedOptions[0].text : ""} \u00b7 ${MODELES[S.modele] ? MODELES[S.modele].nom : ""}`);
   set("etatTitre", t ? (t.length > 40 ? t.slice(0, 39) + "\u2026" : t) : "pas encore de titre");
-  set("etatTypo", `${POLICES[S.police] ? POLICES[S.police].nom.replace(/ \(.*\)/, "") : ""} \u00b7 ${S.align === "gauche" ? "\u00e0 gauche" : "justifi\u00e9"}`);
+  set("etatTypo", `${POLICES[S.police] ? POLICES[S.police].nom.replace(/ \(.*\)/, "") : ""} \u00b7 ${S.align === "gauche" ? "\u00e0 gauche" : "justifi\u00e9"}${S.interligne ? " \u00b7 interligne " + S.interligne.replace(".", ",") : ""}`);
   set("etatBlocs", `${S.blocs.length} bloc${S.blocs.length > 1 ? "s" : ""}`);
 }
 /* Boites repliables du panneau de gauche : etat memorise pour chaque compte */
@@ -1017,7 +1019,7 @@ function chargerEtat(o) {
     n.rot = n.type === "image" ? Math.round((parseFloat(b.rot) || 0) * 2) / 2 : 0; n.rot = rotEff(n);
     return n;
   });
-  S = { version: 1, modele: MODELES[o.modele] ? o.modele : "greve", align: o.align === "gauche" ? "gauche" : "justifie", barre: typeof o.barre === "boolean" ? o.barre : o.modele === "greve", titreMaj: !!o.titreMaj, police: POLICES[o.police] ? o.police : POLICE_DEFAUT, policeTitre: POLICES[o.policeTitre] ? o.policeTitre : "", titre: T(o.titre), objet: T(o.objet), blocs };
+  S = { version: 1, modele: MODELES[o.modele] ? o.modele : "greve", align: o.align === "gauche" ? "gauche" : "justifie", interligne: ["1", "1.15", "1.25", "1.5"].includes(String(o.interligne)) ? String(o.interligne) : "", barre: typeof o.barre === "boolean" ? o.barre : o.modele === "greve", titreMaj: !!o.titreMaj, police: POLICES[o.police] ? o.police : POLICE_DEFAUT, policeTitre: POLICES[o.policeTitre] ? o.policeTitre : "", titre: T(o.titre), objet: T(o.objet), blocs };
   blocActif = null; synchroChamps(); renderEditeur(); majApercu();
 }
 function remplirPolices() {
@@ -1025,7 +1027,7 @@ function remplirPolices() {
   const o0 = el("option", "", "Comme le reste du tract"); o0.value = ""; st.appendChild(o0);
   Object.entries(POLICES).forEach(([k, p]) => { [sp, st].forEach(sel => { const o = el("option", "", p.nom); o.value = k; o.style.fontFamily = pile(k); sel.appendChild(o); }); });
 }
-function synchroChamps() { $("#police").value = POLICES[S.police] ? S.police : POLICE_DEFAUT; $("#policeTitre").value = S.policeTitre || ""; $("#titreMaj").checked = !!S.titreMaj; $("#barre").checked = !!S.barre; $("#align").value = S.align || "justifie"; $("#modele").value = S.modele; $("#titre").value = S.titre; $("#objet").value = S.objet; $("#aideModele").textContent = MODELES[S.modele].aide; }
+function synchroChamps() { $("#police").value = POLICES[S.police] ? S.police : POLICE_DEFAUT; $("#policeTitre").value = S.policeTitre || ""; $("#titreMaj").checked = !!S.titreMaj; $("#barre").checked = !!S.barre; $("#align").value = S.align || "justifie"; $("#interligne").value = S.interligne || ""; $("#modele").value = S.modele; $("#titre").value = S.titre; $("#objet").value = S.objet; $("#aideModele").textContent = MODELES[S.modele].aide; }
 function sauvegardeAuto() { sauvegardeAutoD(); }
 const sauvegardeAutoD = debounce(() => {
   try { localStorage.setItem(CLE_AUTO, JSON.stringify(S, sansCache)); }
@@ -1198,12 +1200,13 @@ $("#modele").onchange = e => { S.modele = e.target.value; $("#aideModele").textC
 $("#titre").oninput = e => { S.titre = e.target.value; changed(); };
 $("#objet").oninput = e => { S.objet = e.target.value; changed(); };
 $("#align").onchange = e => { S.align = e.target.value; majApercu(); };
+$("#interligne").onchange = e => { S.interligne = e.target.value; majApercu(); };
 $("#police").onchange = e => { S.police = e.target.value; renderEditeur(); majApercu(); };
 $("#policeTitre").onchange = e => { S.policeTitre = e.target.value; majApercu(); };
 $("#titreMaj").onchange = e => { S.titreMaj = e.target.checked; majApercu(); };
 $("#barre").onchange = e => { S.barre = e.target.checked; majApercu(); };
 $$("[data-ajout]").forEach(b => b.onclick = () => ajouter(b.dataset.ajout));
-$("#bNouveau").onclick = () => { if (!confirm("Commencer un nouveau tract ? Le contenu actuel sera effac\u00e9 (pensez \u00e0 l\u2019enregistrer avant).")) return; S = { version: 1, modele: S.modele, align: S.align || "justifie", barre: S.barre, titreMaj: false, police: S.police, policeTitre: S.policeTitre, titre: "", objet: "", blocs: [nouveauBloc("texte")] }; blocActif = null; synchroChamps(); renderEditeur(); majApercu(); };
+$("#bNouveau").onclick = () => { if (!confirm("Commencer un nouveau tract ? Le contenu actuel sera effac\u00e9 (pensez \u00e0 l\u2019enregistrer avant).")) return; S = { version: 1, modele: S.modele, align: S.align || "justifie", interligne: S.interligne || "", barre: S.barre, titreMaj: false, police: S.police, policeTitre: S.policeTitre, titre: "", objet: "", blocs: [nouveauBloc("texte")] }; blocActif = null; synchroChamps(); renderEditeur(); majApercu(); };
 $("#bOuvrir").onclick = () => $("#fProjet").click();
 $("#fProjet").onchange = e => { const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { try { chargerEtat(JSON.parse(fr.result)); toast("Projet ouvert."); } catch (er) { toast("Ce fichier n\u2019est pas un projet valide."); } }; fr.readAsText(f); e.target.value = ""; };
 $("#bSauver").onclick = () => telecharger(new Blob([JSON.stringify(S, sansCache)], { type: "application/json" }), nomFichier(".tract.json"));

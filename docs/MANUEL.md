@@ -52,7 +52,7 @@ Elle est organisée en **boîtes repliables** : cliquez sur le titre d'une boît
 - **Titre en majuscules** : met le titre en capitales. À éviter pour un titre long, moins lisible.
 - **Objet du mail** : à renseigner seulement s'il doit être différent du titre.
 
-**Typographie et mise en forme** : police du tract, police du titre, alignement du texte (justifié ou à gauche), décoration des intertitres.
+**Typographie et mise en forme** : police du tract, police du titre, alignement du texte (justifié ou à gauche), décoration des intertitres et **interligne du texte**. L'interligne s'applique au texte courant (paragraphes, listes, encadrés), dans le PDF comme dans le mail ; les titres gardent un interligne plus serré. Quatre valeurs : 1 (compact), 1,15 (resserré), 1,25 (intermédiaire) et 1,5 (aéré), ou « Par défaut du modèle » (1,45 ou 1,5). **1,5 est la valeur conseillée pour la lisibilité**, notamment pour les personnes dyslexiques ou malvoyantes ; en dessous de 1,25, l'onglet « Accessibilité » vous le signale. Un interligne plus petit fait tenir plus de texte sur la page, mais fatigue la lecture.
 
 **Contenu du tract** : la liste des blocs (voir ci-dessous).
 

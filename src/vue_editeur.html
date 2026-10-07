@@ -58,6 +58,9 @@
             <p class="aide">Les polices sont int&#233;gr&#233;es au fichier : elles s&#8217;impriment dans le PDF sans connexion. Dans le mail, la police n&#8217;appara&#238;t que chez les destinataires qui l&#8217;ont install&#233;e ; les autres voient Arial (ou une police de m&#234;me famille).</p>
             <label for="align">Alignement du texte (PDF)</label>
             <select id="align"><option value="justifie">Justifi&#233;</option><option value="gauche">&#192; gauche</option></select>
+            <label for="interligne">Interligne du texte (PDF et mail)</label>
+            <select id="interligne" aria-describedby="aideInterligne"><option value="">Par d&#233;faut du mod&#232;le (1,45 ou 1,5)</option><option value="1">Compact (1)</option><option value="1.15">Resserr&#233; (1,15)</option><option value="1.25">Interm&#233;diaire (1,25)</option><option value="1.5">A&#233;r&#233; (1,5)</option></select>
+            <p class="aide" id="aideInterligne">S&#8217;applique au texte courant : paragraphes, listes, encadr&#233;s. 1,5 est la valeur conseill&#233;e pour la lisibilit&#233; ; un interligne plus petit fait tenir plus de texte, mais fatigue la lecture. Les titres gardent un interligne plus serr&#233;.</p>
             <p class="aide">Le texte justifi&#233; peut cr&#233;er des espaces irr&#233;guliers entre les mots, surtout en colonnes &#233;troites ; &#171; &#192; gauche &#187; est plus confortable pour beaucoup de lecteurs (dyslexie notamment). Le mail reste toujours align&#233; &#224; gauche.</p>
           </div>
         </details>
